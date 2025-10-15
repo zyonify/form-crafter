@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet --version)",
+      "Bash(dotnet new:*)",
+      "Bash(dotnet sln add:*)",
+      "Bash(dotnet add:*)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet run:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nInitial commit: Blazor WASM drag-and-drop form builder MVP\n\nImplemented Phase 1 MVP foundation (80% complete) with:\n\nProject Setup:\n- Blazor WASM with .NET 8 targeting Azure Static Web Apps\n- MudBlazor UI framework with accessibility-focused theme\n- Solution structure with Client and Shared projects\n\nCore Features:\n- Data models: FormElement, FormTemplate, ElementProperties\n- 4 MVP element types: Label, TextInput, Checkbox, Image\n- Canvas component with drag-and-drop functionality\n- Grid snapping (10px) and alignment guides (centerlines)\n- Element library sidebar with categorized elements\n- Properties panel for live editing\n- Position indicators during drag\n\nUI/UX:\n- Accessibility-first design (WCAG 2.1 AA compliant)\n- 18px minimum font size, 48px touch targets\n- High contrast support, keyboard navigation\n- Reduced motion support for accessibility\n\nTech Stack:\n- Blazor WebAssembly .NET 8\n- MudBlazor v8.13.0\n- Native HTML5 drag-and-drop\n- Azure Static Web Apps configuration\n\nRemaining Phase 1 tasks:\n- Local storage persistence (Story 1.9)\n- Zoom controls (Story 1.3.3)\n- Multi-select support (Story 1.7.3)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
