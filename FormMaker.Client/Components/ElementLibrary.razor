@@ -1,0 +1,110 @@
+@using FormMaker.Shared.Models
+@using FormMaker.Shared.Models.Elements
+@using FormMaker.Shared.Enums
+
+<div class="element-library">
+    <MudText Typo="Typo.h6" Style="margin-bottom: 16px; font-weight: 600;">Form Elements</MudText>
+    <MudText Typo="Typo.body2" Style="margin-bottom: 24px; color: #666;">
+        Drag elements to the canvas to build your form
+    </MudText>
+
+    <MudDivider Style="margin-bottom: 16px;" />
+
+    <!-- Basic Elements -->
+    <MudText Typo="Typo.subtitle2" Style="margin-bottom: 12px; font-weight: 600; color: #666;">
+        BASIC
+    </MudText>
+
+    <div class="element-library-item draggable"
+         draggable="true"
+         @ondragstart="() => HandleDragStart(ElementType.Label)"
+         @onclick="() => AddElement(ElementType.Label)">
+        <MudIcon Icon="@Icons.Material.Filled.TextFields" Size="Size.Large" />
+        <span>Label / Heading</span>
+    </div>
+
+    <div class="element-library-item draggable"
+         draggable="true"
+         @ondragstart="() => HandleDragStart(ElementType.TextInput)"
+         @onclick="() => AddElement(ElementType.TextInput)">
+        <MudIcon Icon="@Icons.Material.Filled.Input" Size="Size.Large" />
+        <span>Text Input</span>
+    </div>
+
+    <div class="element-library-item draggable"
+         draggable="true"
+         @ondragstart="() => HandleDragStart(ElementType.Checkbox)"
+         @onclick="() => AddElement(ElementType.Checkbox)">
+        <MudIcon Icon="@Icons.Material.Filled.CheckBox" Size="Size.Large" />
+        <span>Checkbox</span>
+    </div>
+
+    <MudDivider Style="margin: 16px 0;" />
+
+    <!-- Media Elements -->
+    <MudText Typo="Typo.subtitle2" Style="margin-bottom: 12px; font-weight: 600; color: #666;">
+        MEDIA
+    </MudText>
+
+    <div class="element-library-item draggable"
+         draggable="true"
+         @ondragstart="() => HandleDragStart(ElementType.Image)"
+         @onclick="() => AddElement(ElementType.Image)">
+        <MudIcon Icon="@Icons.Material.Filled.Image" Size="Size.Large" />
+        <span>Image / Logo</span>
+    </div>
+
+    <MudDivider Style="margin: 16px 0;" />
+
+    <!-- Help Text -->
+    <MudPaper Elevation="0" Style="background-color: #f0f7ff; padding: 16px; margin-top: 24px;">
+        <MudText Typo="Typo.body2" Style="color: #005fcc;">
+            <strong>Tip:</strong> Click or drag elements to add them to your form. More elements coming soon!
+        </MudText>
+    </MudPaper>
+</div>
+
+@code {
+    [Parameter]
+    public EventCallback<FormElement> OnElementAdded { get; set; }
+
+    private ElementType? currentDragType;
+
+    private void HandleDragStart(ElementType type)
+    {
+        currentDragType = type;
+    }
+
+    private async Task AddElement(ElementType type)
+    {
+        var element = CreateElement(type);
+
+        // Position at center of canvas (will be adjusted by parent)
+        element.X = 100;
+        element.Y = 100;
+
+        await OnElementAdded.InvokeAsync(element);
+    }
+
+    private FormElement CreateElement(ElementType type)
+    {
+        return type switch
+        {
+            ElementType.TextInput => new TextInputElement(),
+            ElementType.Label => new LabelElement(),
+            ElementType.Checkbox => new CheckboxElement(),
+            ElementType.Image => new ImageElement(),
+            _ => throw new ArgumentException($"Unknown element type: {type}")
+        };
+    }
+
+    public ElementType? GetCurrentDragType()
+    {
+        return currentDragType;
+    }
+
+    public void ClearDragType()
+    {
+        currentDragType = null;
+    }
+}

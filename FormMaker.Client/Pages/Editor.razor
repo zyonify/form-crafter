@@ -1,0 +1,255 @@
+@page "/"
+@page "/editor"
+@using FormMaker.Shared.Models
+@using FormMaker.Shared.Models.Elements
+@using FormMaker.Client.Components
+
+<PageTitle>Form Maker - Editor</PageTitle>
+
+<MudLayout>
+    <!-- Toolbar -->
+    <MudAppBar Elevation="1" Dense="false" Style="height: 64px;">
+        <MudText Typo="Typo.h5" Style="font-weight: 600;">Form Maker</MudText>
+
+        <MudSpacer />
+
+        <!-- Form Name -->
+        <MudTextField @bind-Value="currentTemplate.Name"
+                      Variant="Variant.Outlined"
+                      Margin="Margin.Dense"
+                      Style="max-width: 300px; margin-right: 16px;"
+                      Label="Form Name"
+                      Immediate="true" />
+
+        <!-- Action Buttons -->
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Save"
+                   OnClick="SaveForm"
+                   Size="Size.Large">
+            Save
+        </MudButton>
+
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Visibility"
+                   OnClick="PreviewForm"
+                   Size="Size.Large"
+                   Style="margin-left: 8px;">
+            Preview
+        </MudButton>
+    </MudAppBar>
+
+    <!-- Main Content -->
+    <MudMainContent Style="padding: 0; display: flex; height: calc(100vh - 64px);">
+        <!-- Element Library Sidebar -->
+        <div style="width: 300px; border-right: 2px solid #e0e0e0; overflow-y: auto;">
+            <ElementLibrary OnElementAdded="HandleElementAdded" @ref="elementLibrary" />
+        </div>
+
+        <!-- Canvas Area -->
+        <div style="flex: 1; overflow: auto;">
+            <Canvas CurrentTemplate="currentTemplate"
+                    OnElementSelected="HandleElementSelected"
+                    OnElementDropped="HandleElementDropped" />
+        </div>
+
+        <!-- Properties Panel (placeholder for now) -->
+        <div style="width: 320px; border-left: 2px solid #e0e0e0; overflow-y: auto; background-color: #fafafa; padding: 16px;">
+            <MudText Typo="Typo.h6" Style="margin-bottom: 16px; font-weight: 600;">Properties</MudText>
+
+            @if (selectedElement != null)
+            {
+                <MudPaper Elevation="0" Style="padding: 16px; background-color: white; margin-bottom: 16px;">
+                    <MudText Typo="Typo.subtitle1" Style="font-weight: 600; margin-bottom: 12px;">
+                        @selectedElement.GetDisplayName()
+                    </MudText>
+
+                    <!-- Position -->
+                    <MudNumericField @bind-Value="selectedElement.X"
+                                     Label="X Position"
+                                     Variant="Variant.Outlined"
+                                     Margin="Margin.Dense"
+                                     Style="margin-bottom: 12px;" />
+
+                    <MudNumericField @bind-Value="selectedElement.Y"
+                                     Label="Y Position"
+                                     Variant="Variant.Outlined"
+                                     Margin="Margin.Dense"
+                                     Style="margin-bottom: 12px;" />
+
+                    <!-- Size -->
+                    <MudNumericField @bind-Value="selectedElement.Width"
+                                     Label="Width"
+                                     Variant="Variant.Outlined"
+                                     Margin="Margin.Dense"
+                                     Style="margin-bottom: 12px;" />
+
+                    <MudNumericField @bind-Value="selectedElement.Height"
+                                     Label="Height"
+                                     Variant="Variant.Outlined"
+                                     Margin="Margin.Dense"
+                                     Style="margin-bottom: 12px;" />
+
+                    <!-- Element-specific properties -->
+                    @if (selectedElement is LabelElement label)
+                    {
+                        <MudTextField @bind-Value="label.Text"
+                                      Label="Text Content"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Lines="3"
+                                      Style="margin-bottom: 12px;" />
+
+                        <MudSelect @bind-Value="label.HeadingLevel"
+                                   Label="Heading Level"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense">
+                            <MudSelectItem Value="@("H1")">Heading 1</MudSelectItem>
+                            <MudSelectItem Value="@("H2")">Heading 2</MudSelectItem>
+                            <MudSelectItem Value="@("H3")">Heading 3</MudSelectItem>
+                            <MudSelectItem Value="@("H4")">Heading 4</MudSelectItem>
+                            <MudSelectItem Value="@("H5")">Heading 5</MudSelectItem>
+                            <MudSelectItem Value="@("H6")">Heading 6</MudSelectItem>
+                            <MudSelectItem Value="@("P")">Paragraph</MudSelectItem>
+                        </MudSelect>
+                    }
+                    else if (selectedElement is TextInputElement textInput)
+                    {
+                        <MudTextField @bind-Value="textInput.Placeholder"
+                                      Label="Placeholder"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Style="margin-bottom: 12px;" />
+
+                        <MudCheckBox @bind-Value="textInput.IsRequired"
+                                     Label="Required Field"
+                                     Color="Color.Primary" />
+                    }
+                    else if (selectedElement is CheckboxElement checkbox)
+                    {
+                        <MudTextField @bind-Value="checkbox.Label"
+                                      Label="Label Text"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Style="margin-bottom: 12px;" />
+
+                        <MudCheckBox @bind-Value="checkbox.DefaultChecked"
+                                     Label="Checked by Default"
+                                     Color="Color.Primary" />
+                    }
+
+                    <!-- Delete Button -->
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Error"
+                               StartIcon="@Icons.Material.Filled.Delete"
+                               OnClick="DeleteSelectedElement"
+                               FullWidth="true"
+                               Style="margin-top: 24px;">
+                        Delete Element
+                    </MudButton>
+                </MudPaper>
+
+                <!-- Styling Properties -->
+                <MudPaper Elevation="0" Style="padding: 16px; background-color: white;">
+                    <MudText Typo="Typo.subtitle1" Style="font-weight: 600; margin-bottom: 12px;">
+                        Styling
+                    </MudText>
+
+                    <MudNumericField @bind-Value="selectedElement.Properties.FontSize"
+                                     Label="Font Size"
+                                     Variant="Variant.Outlined"
+                                     Margin="Margin.Dense"
+                                     Min="12"
+                                     Max="72"
+                                     Style="margin-bottom: 12px;" />
+
+                    <MudCheckBox @bind-Value="selectedElement.Properties.Bold"
+                                 Label="Bold"
+                                 Color="Color.Primary" />
+
+                    <MudCheckBox @bind-Value="selectedElement.Properties.Italic"
+                                 Label="Italic"
+                                 Color="Color.Primary" />
+                </MudPaper>
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                    Select an element on the canvas to edit its properties
+                </MudAlert>
+            }
+
+            <!-- Element Count -->
+            <MudPaper Elevation="0" Style="padding: 16px; background-color: white; margin-top: 16px;">
+                <MudText Typo="Typo.body2" Style="color: #666;">
+                    <strong>Elements:</strong> @currentTemplate.Elements.Count<br />
+                    <strong>Page Size:</strong> @currentTemplate.PageSize
+                </MudText>
+            </MudPaper>
+        </div>
+    </MudMainContent>
+</MudLayout>
+
+<!-- Snackbar for notifications -->
+<MudSnackbarProvider />
+
+@code {
+    private FormTemplate currentTemplate = new FormTemplate
+    {
+        Name = "Untitled Form",
+        PageSize = FormMaker.Shared.Enums.PageSize.Letter
+    };
+
+    private FormElement? selectedElement;
+    private ElementLibrary? elementLibrary;
+
+    [Inject]
+    private ISnackbar Snackbar { get; set; } = default!;
+
+    private void HandleElementAdded(FormElement element)
+    {
+        currentTemplate.AddElement(element);
+        selectedElement = element;
+        element.IsSelected = true;
+
+        Snackbar.Add($"{element.GetDisplayName()} added to canvas", Severity.Success);
+        StateHasChanged();
+    }
+
+    private void HandleElementSelected(FormElement element)
+    {
+        selectedElement = element;
+        StateHasChanged();
+    }
+
+    private void HandleElementDropped(FormElement element)
+    {
+        currentTemplate.MarkAsUpdated();
+        StateHasChanged();
+    }
+
+    private void DeleteSelectedElement()
+    {
+        if (selectedElement != null)
+        {
+            currentTemplate.RemoveElement(selectedElement.Id);
+            Snackbar.Add($"{selectedElement.GetDisplayName()} deleted", Severity.Info);
+            selectedElement = null;
+            StateHasChanged();
+        }
+    }
+
+    private void SaveForm()
+    {
+        // TODO: Implement actual save to localStorage or API
+        currentTemplate.MarkAsUpdated();
+        Snackbar.Add($"Form '{currentTemplate.Name}' saved successfully!", Severity.Success);
+    }
+
+    private void PreviewForm()
+    {
+        // TODO: Implement preview mode
+        Snackbar.Add("Preview mode coming soon!", Severity.Info);
+    }
+}

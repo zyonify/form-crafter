@@ -1,0 +1,79 @@
+@using FormMaker.Shared.Models
+@using FormMaker.Shared.Models.Elements
+@using FormMaker.Shared.Enums
+
+<div class="canvas-container">
+    <div class="canvas @GetPageSizeClass()"
+         style="width: @(CurrentTemplate.WidthInPixels)px; height: @(CurrentTemplate.HeightInPixels)px; background-color: @CurrentTemplate.BackgroundColor;"
+         @ondrop="HandleDrop"
+         @ondrop:preventDefault="true"
+         @ondragover="HandleDragOver"
+         @ondragover:preventDefault="true"
+         @onclick="HandleCanvasClick">
+
+        <!-- Margin guides -->
+        <div class="canvas-margins"
+             style="top: @(CurrentTemplate.MarginTop)px;
+                    left: @(CurrentTemplate.MarginLeft)px;
+                    right: @(CurrentTemplate.MarginRight)px;
+                    bottom: @(CurrentTemplate.MarginBottom)px;">
+        </div>
+
+        <!-- Grid background -->
+        <div class="canvas-grid" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none;"></div>
+
+        <!-- Render all elements -->
+        @foreach (var element in CurrentTemplate.Elements)
+        {
+            <div class="canvas-element @(element.IsSelected ? "element-selected" : "")"
+                 style="position: absolute;
+                        left: @(element.X)px;
+                        top: @(element.Y)px;
+                        width: @(element.Width)px;
+                        height: @(element.Height)px;
+                        cursor: pointer;
+                        z-index: @(element.Properties.ZIndex);"
+                 @onclick="() => HandleElementClick(element)"
+                 @onclick:stopPropagation="true"
+                 draggable="true"
+                 @ondragstart="() => HandleElementDragStart(element)">
+
+                @RenderElement(element)
+            </div>
+        }
+
+        <!-- Alignment guides (shown during drag) -->
+        @if (showAlignmentGuides)
+        {
+            @if (verticalGuidePosition.HasValue)
+            {
+                <div class="alignment-guide vertical" style="left: @(verticalGuidePosition.Value)px;"></div>
+            }
+            @if (horizontalGuidePosition.HasValue)
+            {
+                <div class="alignment-guide horizontal" style="top: @(horizontalGuidePosition.Value)px;"></div>
+            }
+        }
+    </div>
+
+    <!-- Position indicator (shown during drag) -->
+    @if (showPositionIndicator && draggedElement != null)
+    {
+        <div class="position-indicator" style="left: @(mouseX + 20)px; top: @(mouseY)px;">
+            X: @draggedElement.X, Y: @draggedElement.Y<br/>
+            W: @draggedElement.Width, H: @draggedElement.Height
+        </div>
+    }
+</div>
+
+@code {
+    private FormElement? draggedElement;
+    private bool showAlignmentGuides = false;
+    private bool showPositionIndicator = false;
+    private int? verticalGuidePosition;
+    private int? horizontalGuidePosition;
+    private int mouseX;
+    private int mouseY;
+    private const int SNAP_THRESHOLD = 5;
+    private const int GRID_SIZE = 10;
+}
