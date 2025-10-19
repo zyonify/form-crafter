@@ -4,11 +4,8 @@
 
 <div class="canvas-container">
     <div class="canvas @GetPageSizeClass()"
-         style="width: @(CurrentTemplate.WidthInPixels)px; height: @(CurrentTemplate.HeightInPixels)px; background-color: @CurrentTemplate.BackgroundColor;"
-         @ondrop="HandleDrop"
-         @ondrop:preventDefault="true"
-         @ondragover="HandleDragOver"
-         @ondragover:preventDefault="true"
+         data-canvas-id="main-canvas"
+         style="width: @(CurrentTemplate.WidthInPixels)px; height: @(CurrentTemplate.HeightInPixels)px; background-color: @CurrentTemplate.BackgroundColor; position: relative; transform: scale(@zoomLevel); transform-origin: top left;"
          @onclick="HandleCanvasClick">
 
         <!-- Margin guides -->
@@ -25,20 +22,40 @@
         <!-- Render all elements -->
         @foreach (var element in CurrentTemplate.Elements)
         {
-            <div class="canvas-element @(element.IsSelected ? "element-selected" : "")"
+            <div class="canvas-element @(element.IsSelected ? "element-selected" : "") @(isDragging && draggedElement == element ? "element-dragging" : "")"
+                 data-element-id="@element.Id"
                  style="position: absolute;
-                        left: @(element.X)px;
-                        top: @(element.Y)px;
-                        width: @(element.Width)px;
-                        height: @(element.Height)px;
-                        cursor: pointer;
-                        z-index: @(element.Properties.ZIndex);"
+                        left: @(isDragging && draggedElement == element ? dragX : isResizing && resizedElement == element ? resizeX : element.X)px;
+                        top: @(isDragging && draggedElement == element ? dragY : isResizing && resizedElement == element ? resizeY : element.Y)px;
+                        width: @(isResizing && resizedElement == element ? resizeWidth : element.Width)px;
+                        height: @(isResizing && resizedElement == element ? resizeHeight : element.Height)px;
+                        cursor: @(isDragging && draggedElement == element ? "grabbing" : "grab");
+                        z-index: @(isDragging && draggedElement == element || isResizing && resizedElement == element ? 1000 : element.Properties.ZIndex);
+                        opacity: @(isDragging && draggedElement == element ? 0.8 : 1);
+                        transition: @(isDragging && draggedElement == element || isResizing ? "none" : "opacity 0.2s ease");
+                        user-select: none;"
                  @onclick="() => HandleElementClick(element)"
                  @onclick:stopPropagation="true"
-                 draggable="true"
-                 @ondragstart="() => HandleElementDragStart(element)">
+                 @onmousedown="(e) => HandleMouseDown(e, element)"
+                 @onmousedown:stopPropagation="true">
 
                 @RenderElement(element)
+
+                @* Resize handles - only show for selected elements *@
+                @if (element.IsSelected && !isDragging)
+                {
+                    <!-- Corner handles -->
+                    <div class="resize-handle resize-nw" @onmousedown="@(e => HandleResizeStart(e, element, "nw"))" @onmousedown:stopPropagation="true"></div>
+                    <div class="resize-handle resize-ne" @onmousedown="@(e => HandleResizeStart(e, element, "ne"))" @onmousedown:stopPropagation="true"></div>
+                    <div class="resize-handle resize-sw" @onmousedown="@(e => HandleResizeStart(e, element, "sw"))" @onmousedown:stopPropagation="true"></div>
+                    <div class="resize-handle resize-se" @onmousedown="@(e => HandleResizeStart(e, element, "se"))" @onmousedown:stopPropagation="true"></div>
+
+                    <!-- Edge handles -->
+                    <div class="resize-handle resize-n" @onmousedown="@(e => HandleResizeStart(e, element, "n"))" @onmousedown:stopPropagation="true"></div>
+                    <div class="resize-handle resize-s" @onmousedown="@(e => HandleResizeStart(e, element, "s"))" @onmousedown:stopPropagation="true"></div>
+                    <div class="resize-handle resize-w" @onmousedown="@(e => HandleResizeStart(e, element, "w"))" @onmousedown:stopPropagation="true"></div>
+                    <div class="resize-handle resize-e" @onmousedown="@(e => HandleResizeStart(e, element, "e"))" @onmousedown:stopPropagation="true"></div>
+                }
             </div>
         }
 
@@ -54,26 +71,44 @@
                 <div class="alignment-guide horizontal" style="top: @(horizontalGuidePosition.Value)px;"></div>
             }
         }
-    </div>
 
-    <!-- Position indicator (shown during drag) -->
-    @if (showPositionIndicator && draggedElement != null)
-    {
-        <div class="position-indicator" style="left: @(mouseX + 20)px; top: @(mouseY)px;">
-            X: @draggedElement.X, Y: @draggedElement.Y<br/>
-            W: @draggedElement.Width, H: @draggedElement.Height
-        </div>
-    }
+        <!-- Smart spacing guides (shown during drag) -->
+        @foreach (var guide in spacingGuides)
+        {
+            @if (guide.IsVertical)
+            {
+                <div class="spacing-guide vertical" style="left: @(guide.Position)px;"></div>
+            }
+            else
+            {
+                <div class="spacing-guide horizontal" style="top: @(guide.Position)px;"></div>
+            }
+        }
+    </div>
 </div>
 
 @code {
     private FormElement? draggedElement;
+    private bool isDragging = false;
+    private int dragX = 0;
+    private int dragY = 0;
+    private int dragOffsetX = 0;
+    private int dragOffsetY = 0;
     private bool showAlignmentGuides = false;
-    private bool showPositionIndicator = false;
     private int? verticalGuidePosition;
     private int? horizontalGuidePosition;
-    private int mouseX;
-    private int mouseY;
     private const int SNAP_THRESHOLD = 5;
     private const int GRID_SIZE = 10;
+
+    // Resize state
+    private FormElement? resizedElement;
+    private bool isResizing = false;
+    private int resizeWidth = 0;
+    private int resizeHeight = 0;
+    private int resizeX = 0;
+    private int resizeY = 0;
+
+    // Smart spacing guides
+    private List<(int Position, bool IsVertical)> spacingGuides = new();
+    private const int SPACING_SNAP_THRESHOLD = 5;
 }

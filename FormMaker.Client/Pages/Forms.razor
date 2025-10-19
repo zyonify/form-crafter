@@ -1,0 +1,274 @@
+@page "/forms"
+@using FormMaker.Client.Services
+@using FormMaker.Client.Components
+@using FormMaker.Shared.Models
+
+<PageTitle>My Forms - Form Maker</PageTitle>
+
+<!-- Global Navigation -->
+<SharedAppBar />
+
+<!-- Spacer for fixed header -->
+<div style="height: 64px;"></div>
+
+<MudContainer MaxWidth="MaxWidth.Large" Style="padding-top: 32px; padding-bottom: 32px;">
+    <!-- Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+        <div>
+            <MudText Typo="Typo.h3" Style="font-weight: 600; margin-bottom: 8px;">My Forms</MudText>
+            <MudText Typo="Typo.body1" Color="Color.Secondary">
+                Manage your saved form templates
+            </MudText>
+        </div>
+
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   Href="/editor"
+                   Size="Size.Large">
+            New Form
+        </MudButton>
+    </div>
+
+    <!-- Forms List -->
+    @if (isLoading)
+    {
+        <div style="text-align: center; padding: 64px 0;">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+            <MudText Typo="Typo.body1" Style="margin-top: 16px;">Loading your forms...</MudText>
+        </div>
+    }
+    else if (forms == null || forms.Count == 0)
+    {
+        <!-- Empty State -->
+        <MudPaper Elevation="0" Style="text-align: center; padding: 64px 32px; background-color: #fafafa;">
+            <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Large" Style="font-size: 96px; color: #ccc; margin-bottom: 16px;" />
+            <MudText Typo="Typo.h5" Style="margin-bottom: 16px; color: #666;">No Forms Yet</MudText>
+            <MudText Typo="Typo.body1" Style="margin-bottom: 32px; color: #999;">
+                Create your first form to get started!
+            </MudText>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       Href="/editor"
+                       Size="Size.Large">
+                Create Your First Form
+            </MudButton>
+        </MudPaper>
+    }
+    else
+    {
+        <!-- Forms Grid -->
+        <MudGrid>
+            @foreach (var form in forms)
+            {
+                <MudItem xs="12" sm="6" md="4">
+                    <MudCard Elevation="2" Style="height: 100%;">
+                        <MudCardContent>
+                            <MudText Typo="Typo.h6" Style="font-weight: 600; margin-bottom: 8px;">
+                                @form.Name
+                            </MudText>
+
+                            @if (!string.IsNullOrEmpty(form.Description))
+                            {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary" Style="margin-bottom: 12px;">
+                                    @form.Description
+                                </MudText>
+                            }
+
+                            <MudText Typo="Typo.body2" Style="margin-bottom: 4px;">
+                                <MudIcon Icon="@Icons.Material.Filled.Widgets" Size="Size.Small" />
+                                @form.ElementCount elements
+                            </MudText>
+
+                            <MudText Typo="Typo.body2" Style="margin-bottom: 4px;">
+                                <MudIcon Icon="@Icons.Material.Filled.AspectRatio" Size="Size.Small" />
+                                @form.PageSize
+                            </MudText>
+
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Style="margin-top: 8px;">
+                                Updated @GetRelativeTime(form.UpdatedAt)
+                            </MudText>
+                        </MudCardContent>
+
+                        <MudCardActions>
+                            <MudButton StartIcon="@Icons.Material.Filled.Edit"
+                                       Color="Color.Primary"
+                                       OnClick="() => OpenForm(form.Id)">
+                                Open
+                            </MudButton>
+
+                            <MudButton StartIcon="@Icons.Material.Filled.ContentCopy"
+                                       Color="Color.Default"
+                                       OnClick="() => DuplicateForm(form.Id)">
+                                Duplicate
+                            </MudButton>
+
+                            <MudSpacer />
+
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                           Color="Color.Error"
+                                           OnClick="() => ShowDeleteDialog(form.Id, form.Name)" />
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+</MudContainer>
+
+<!-- Delete Confirmation Dialog -->
+<MudDialog @bind-IsVisible="deleteDialogVisible" Options="dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Delete Form?</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText>Are you sure you want to delete <strong>@formToDeleteName</strong>?</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Error" Style="margin-top: 8px;">
+            This action cannot be undone.
+        </MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CancelDelete">Cancel</MudButton>
+        <MudButton Color="Color.Error"
+                   Variant="Variant.Filled"
+                   OnClick="ConfirmDelete">
+            Delete
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private List<FormMetadata>? forms;
+    private bool isLoading = true;
+    private bool deleteDialogVisible = false;
+    private Guid? formToDeleteId;
+    private string? formToDeleteName;
+
+    private DialogOptions dialogOptions = new()
+    {
+        CloseButton = true,
+        MaxWidth = MaxWidth.Small,
+        FullWidth = true
+    };
+
+    [Inject]
+    private LocalStorageService LocalStorage { get; set; } = default!;
+
+    [Inject]
+    private NavigationManager Navigation { get; set; } = default!;
+
+    [Inject]
+    private ISnackbar Snackbar { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadForms();
+    }
+
+    private async Task LoadForms()
+    {
+        isLoading = true;
+        try
+        {
+            forms = await LocalStorage.GetAllFormsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading forms: {ex.Message}", Severity.Error);
+            forms = new List<FormMetadata>();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void OpenForm(Guid formId)
+    {
+        Navigation.NavigateTo($"/editor?id={formId}");
+    }
+
+    private async Task DuplicateForm(Guid formId)
+    {
+        try
+        {
+            var originalForm = await LocalStorage.LoadFormAsync(formId);
+            if (originalForm != null)
+            {
+                // Create a copy with a new ID and name
+                originalForm.Id = Guid.NewGuid();
+                originalForm.Name = $"{originalForm.Name} (Copy)";
+                originalForm.CreatedAt = DateTime.UtcNow;
+                originalForm.UpdatedAt = DateTime.UtcNow;
+
+                await LocalStorage.SaveFormAsync(originalForm);
+                Snackbar.Add("Form duplicated successfully!", Severity.Success);
+
+                // Reload the forms list
+                await LoadForms();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error duplicating form: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void ShowDeleteDialog(Guid formId, string formName)
+    {
+        formToDeleteId = formId;
+        formToDeleteName = formName;
+        deleteDialogVisible = true;
+    }
+
+    private void CancelDelete()
+    {
+        deleteDialogVisible = false;
+        formToDeleteId = null;
+        formToDeleteName = null;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (formToDeleteId.HasValue)
+        {
+            try
+            {
+                await LocalStorage.DeleteFormAsync(formToDeleteId.Value);
+                Snackbar.Add($"'{formToDeleteName}' deleted", Severity.Info);
+
+                // Reload the forms list
+                await LoadForms();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error deleting form: {ex.Message}", Severity.Error);
+            }
+            finally
+            {
+                deleteDialogVisible = false;
+                formToDeleteId = null;
+                formToDeleteName = null;
+            }
+        }
+    }
+
+    private string GetRelativeTime(DateTime dateTime)
+    {
+        var timeSpan = DateTime.UtcNow - dateTime;
+
+        if (timeSpan.TotalMinutes < 1)
+            return "just now";
+        if (timeSpan.TotalMinutes < 60)
+            return $"{(int)timeSpan.TotalMinutes} min ago";
+        if (timeSpan.TotalHours < 24)
+            return $"{(int)timeSpan.TotalHours} hours ago";
+        if (timeSpan.TotalDays < 7)
+            return $"{(int)timeSpan.TotalDays} days ago";
+        if (timeSpan.TotalDays < 30)
+            return $"{(int)(timeSpan.TotalDays / 7)} weeks ago";
+
+        return dateTime.ToString("MMM d, yyyy");
+    }
+}

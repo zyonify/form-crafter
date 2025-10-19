@@ -1,47 +1,94 @@
-@page "/"
 @page "/editor"
 @using FormMaker.Shared.Models
 @using FormMaker.Shared.Models.Elements
 @using FormMaker.Client.Components
+@using Microsoft.JSInterop
 
 <PageTitle>Form Maker - Editor</PageTitle>
 
-<MudLayout>
-    <!-- Toolbar -->
-    <MudAppBar Elevation="1" Dense="false" Style="height: 64px;">
-        <MudText Typo="Typo.h5" Style="font-weight: 600;">Form Maker</MudText>
+<!-- Global Navigation -->
+<SharedAppBar />
 
-        <MudSpacer />
+<!-- Spacer for fixed navigation -->
+<div style="height: 64px;"></div>
 
-        <!-- Form Name -->
-        <MudTextField @bind-Value="currentTemplate.Name"
-                      Variant="Variant.Outlined"
-                      Margin="Margin.Dense"
-                      Style="max-width: 300px; margin-right: 16px;"
-                      Label="Form Name"
-                      Immediate="true" />
+<!-- Editor Toolbar - Fixed below main nav -->
+<div style="position: fixed; top: 64px; left: 0; right: 0; z-index: 1200; background-color: #fafafa; border-bottom: 2px solid #e0e0e0; padding: 12px 24px; display: flex; align-items: center; gap: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+    <!-- Form Name -->
+    <MudTextField @bind-Value="currentTemplate.Name"
+                  Variant="Variant.Outlined"
+                  Margin="Margin.Dense"
+                  Style="max-width: 300px;"
+                  Label="Form Name"
+                  Immediate="true" />
 
-        <!-- Action Buttons -->
-        <MudButton Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   StartIcon="@Icons.Material.Filled.Save"
-                   OnClick="SaveForm"
-                   Size="Size.Large">
-            Save
-        </MudButton>
+    <!-- Undo/Redo Buttons -->
+    <MudIconButton Icon="@Icons.Material.Filled.Undo"
+                   Color="Color.Default"
+                   OnClick="Undo"
+                   Disabled="@(!historyService.CanUndo)"
+                   Title="Undo (Ctrl+Z)"
+                   Size="Size.Large" />
 
-        <MudButton Variant="Variant.Outlined"
-                   Color="Color.Primary"
-                   StartIcon="@Icons.Material.Filled.Visibility"
-                   OnClick="PreviewForm"
-                   Size="Size.Large"
-                   Style="margin-left: 8px;">
-            Preview
-        </MudButton>
-    </MudAppBar>
+    <MudIconButton Icon="@Icons.Material.Filled.Redo"
+                   Color="Color.Default"
+                   OnClick="Redo"
+                   Disabled="@(!historyService.CanRedo)"
+                   Title="Redo (Ctrl+Y)"
+                   Size="Size.Large" />
 
+    <!-- Divider -->
+    <div style="width: 2px; height: 32px; background-color: #e0e0e0; margin: 0 8px;"></div>
+
+    <!-- Zoom Controls -->
+    <MudIconButton Icon="@Icons.Material.Filled.ZoomOut"
+                   Color="Color.Default"
+                   OnClick="ZoomOut"
+                   Title="Zoom Out"
+                   Size="Size.Large" />
+
+    <MudText Style="min-width: 60px; text-align: center; font-weight: 600;">
+        @(canvasRef?.GetZoomPercentage() ?? 100)%
+    </MudText>
+
+    <MudIconButton Icon="@Icons.Material.Filled.ZoomIn"
+                   Color="Color.Default"
+                   OnClick="ZoomIn"
+                   Title="Zoom In"
+                   Size="Size.Large" />
+
+    <MudIconButton Icon="@Icons.Material.Filled.FitScreen"
+                   Color="Color.Default"
+                   OnClick="ResetZoom"
+                   Title="Reset Zoom (100%)"
+                   Size="Size.Large" />
+
+    <MudSpacer />
+
+    <!-- Action Buttons -->
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.Save"
+               OnClick="SaveForm"
+               Size="Size.Large">
+        Save
+    </MudButton>
+
+    <MudButton Variant="Variant.Outlined"
+               Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.Visibility"
+               OnClick="PreviewForm"
+               Size="Size.Large">
+        Preview
+    </MudButton>
+</div>
+
+<!-- Spacer for editor toolbar (64px nav + ~60px toolbar) -->
+<div style="height: 60px;"></div>
+
+<MudLayout Style="height: calc(100vh - 124px);">
     <!-- Main Content -->
-    <MudMainContent Style="padding: 0; display: flex; height: calc(100vh - 64px);">
+    <MudMainContent Style="padding: 0; display: flex; height: 100%;">
         <!-- Element Library Sidebar -->
         <div style="width: 300px; border-right: 2px solid #e0e0e0; overflow-y: auto;">
             <ElementLibrary OnElementAdded="HandleElementAdded" @ref="elementLibrary" />
@@ -49,7 +96,8 @@
 
         <!-- Canvas Area -->
         <div style="flex: 1; overflow: auto;">
-            <Canvas CurrentTemplate="currentTemplate"
+            <Canvas @ref="canvasRef"
+                    CurrentTemplate="currentTemplate"
                     OnElementSelected="HandleElementSelected"
                     OnElementDropped="HandleElementDropped" />
         </div>
@@ -58,12 +106,31 @@
         <div style="width: 320px; border-left: 2px solid #e0e0e0; overflow-y: auto; background-color: #fafafa; padding: 16px;">
             <MudText Typo="Typo.h6" Style="margin-bottom: 16px; font-weight: 600;">Properties</MudText>
 
-            @if (selectedElement != null)
+            @{
+                var selectedElements = currentTemplate.Elements.Where(e => e.IsSelected).ToList();
+                var multipleSelected = selectedElements.Count > 1;
+                var displayElement = selectedElement ?? selectedElements.FirstOrDefault();
+            }
+
+            @if (selectedElement != null || selectedElements.Count > 0)
             {
+
                 <MudPaper Elevation="0" Style="padding: 16px; background-color: white; margin-bottom: 16px;">
-                    <MudText Typo="Typo.subtitle1" Style="font-weight: 600; margin-bottom: 12px;">
-                        @selectedElement.GetDisplayName()
-                    </MudText>
+                    @if (multipleSelected)
+                    {
+                        <MudText Typo="Typo.subtitle1" Style="font-weight: 600; margin-bottom: 12px;">
+                            @selectedElements.Count Elements Selected
+                        </MudText>
+                    }
+                    else if (displayElement != null)
+                    {
+                        <MudText Typo="Typo.subtitle1" Style="font-weight: 600; margin-bottom: 12px;">
+                            @displayElement.GetDisplayName()
+                        </MudText>
+                    }
+
+                    @if (!multipleSelected && displayElement != null)
+                    {
 
                     <!-- Position -->
                     <MudNumericField @bind-Value="selectedElement.X"
@@ -138,6 +205,326 @@
                                      Label="Checked by Default"
                                      Color="Color.Primary" />
                     }
+                    else if (selectedElement is TextAreaElement textArea)
+                    {
+                        <MudTextField @bind-Value="textArea.Placeholder"
+                                      Label="Placeholder"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Style="margin-bottom: 12px;" />
+
+                        <MudNumericField @bind-Value="textArea.Rows"
+                                         Label="Number of Rows"
+                                         Variant="Variant.Outlined"
+                                         Margin="Margin.Dense"
+                                         Min="1"
+                                         Max="20"
+                                         Style="margin-bottom: 12px;" />
+
+                        <MudNumericField @bind-Value="textArea.MaxLength"
+                                         Label="Max Length"
+                                         Variant="Variant.Outlined"
+                                         Margin="Margin.Dense"
+                                         Min="0"
+                                         Style="margin-bottom: 12px;" />
+
+                        <MudCheckBox @bind-Value="textArea.IsRequired"
+                                     Label="Required Field"
+                                     Color="Color.Primary" />
+
+                        <MudCheckBox @bind-Value="textArea.WrapText"
+                                     Label="Wrap Text"
+                                     Color="Color.Primary" />
+
+                        <MudCheckBox @bind-Value="textArea.Resizable"
+                                     Label="Allow Resize"
+                                     Color="Color.Primary" />
+                    }
+                    else if (selectedElement is DropdownElement dropdown)
+                    {
+                        <MudTextField @bind-Value="dropdown.Placeholder"
+                                      Label="Placeholder"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Style="margin-bottom: 12px;" />
+
+                        <MudTextField @bind-Value="optionsText"
+                                      Label="Options (one per line)"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Lines="5"
+                                      Style="margin-bottom: 12px;"
+                                      Immediate="true"
+                                      @onblur="() => UpdateDropdownOptions(dropdown)" />
+
+                        <MudCheckBox @bind-Value="dropdown.IsRequired"
+                                     Label="Required Field"
+                                     Color="Color.Primary" />
+
+                        <MudCheckBox @bind-Value="dropdown.AllowMultiple"
+                                     Label="Allow Multiple Selection"
+                                     Color="Color.Primary" />
+
+                        <MudCheckBox @bind-Value="dropdown.EnableSearch"
+                                     Label="Enable Search"
+                                     Color="Color.Primary" />
+                    }
+                    else if (selectedElement is DatePickerElement datePicker)
+                    {
+                        <MudTextField @bind-Value="datePicker.Placeholder"
+                                      Label="Placeholder"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Style="margin-bottom: 12px;" />
+
+                        <MudTextField @bind-Value="datePicker.DateFormat"
+                                      Label="Date Format"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Style="margin-bottom: 12px;"
+                                      HelperText="e.g., MM/dd/yyyy, yyyy-MM-dd" />
+
+                        <MudCheckBox @bind-Value="datePicker.IsRequired"
+                                     Label="Required Field"
+                                     Color="Color.Primary" />
+
+                        <MudCheckBox @bind-Value="datePicker.IncludeTime"
+                                     Label="Include Time"
+                                     Color="Color.Primary" />
+                    }
+                    else if (selectedElement is DividerElement divider)
+                    {
+                        <MudSelect @bind-Value="divider.Style"
+                                   Label="Line Style"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense"
+                                   Style="margin-bottom: 12px;">
+                            <MudSelectItem Value="@("Solid")">Solid</MudSelectItem>
+                            <MudSelectItem Value="@("Dashed")">Dashed</MudSelectItem>
+                            <MudSelectItem Value="@("Dotted")">Dotted</MudSelectItem>
+                        </MudSelect>
+
+                        <MudNumericField @bind-Value="divider.Thickness"
+                                         Label="Line Thickness (px)"
+                                         Variant="Variant.Outlined"
+                                         Margin="Margin.Dense"
+                                         Min="1"
+                                         Max="10"
+                                         Style="margin-bottom: 12px;" />
+
+                        <MudTextField @bind-Value="divider.Color"
+                                      Label="Line Color"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Style="margin-bottom: 12px;"
+                                      HelperText="e.g., #cccccc, red, rgb(0,0,0)" />
+                    }
+                    else if (selectedElement is RadioGroupElement radioGroup)
+                    {
+                        <MudTextField @bind-Value="radioGroup.Label"
+                                      Label="Group Label"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Style="margin-bottom: 12px;" />
+
+                        <MudTextField @bind-Value="radioOptionsText"
+                                      Label="Options (one per line)"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Lines="5"
+                                      Style="margin-bottom: 12px;"
+                                      Immediate="true"
+                                      @onblur="() => UpdateRadioOptions(radioGroup)" />
+
+                        <MudSelect @bind-Value="radioGroup.Layout"
+                                   Label="Layout"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense"
+                                   Style="margin-bottom: 12px;">
+                            <MudSelectItem Value="@("Vertical")">Vertical</MudSelectItem>
+                            <MudSelectItem Value="@("Horizontal")">Horizontal</MudSelectItem>
+                        </MudSelect>
+
+                        <MudCheckBox @bind-Value="radioGroup.IsRequired"
+                                     Label="Required Field"
+                                     Color="Color.Primary" />
+                    }
+                    else if (selectedElement is FileUploadElement fileUpload)
+                    {
+                        <MudTextField @bind-Value="fileUpload.Label"
+                                      Label="Label"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Style="margin-bottom: 12px;" />
+
+                        <MudTextField @bind-Value="fileUpload.ButtonText"
+                                      Label="Button Text"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Style="margin-bottom: 12px;" />
+
+                        <MudTextField @bind-Value="fileUpload.HelperText"
+                                      Label="Helper Text"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Style="margin-bottom: 12px;" />
+
+                        <MudTextField @bind-Value="fileExtensionsText"
+                                      Label="Allowed Extensions (comma-separated)"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Style="margin-bottom: 12px;"
+                                      Immediate="true"
+                                      HelperText="e.g., .pdf, .jpg, .png"
+                                      @onblur="() => UpdateFileExtensions(fileUpload)" />
+
+                        <MudNumericField @bind-Value="fileUpload.MaxFileSize"
+                                         Label="Max File Size (MB)"
+                                         Variant="Variant.Outlined"
+                                         Margin="Margin.Dense"
+                                         Min="1"
+                                         Max="100"
+                                         Style="margin-bottom: 12px;" />
+
+                        <MudCheckBox @bind-Value="fileUpload.IsRequired"
+                                     Label="Required Field"
+                                     Color="Color.Primary" />
+
+                        <MudCheckBox @bind-Value="fileUpload.Multiple"
+                                     Label="Allow Multiple Files"
+                                     Color="Color.Primary" />
+                    }
+                    else if (selectedElement is SignatureElement signature)
+                    {
+                        <MudTextField @bind-Value="signature.Label"
+                                      Label="Label"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Style="margin-bottom: 12px;" />
+
+                        <MudTextField @bind-Value="signature.BorderColor"
+                                      Label="Border Color"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Style="margin-bottom: 12px;"
+                                      HelperText="e.g., #000000, black" />
+
+                        <MudTextField @bind-Value="signature.BackgroundColor"
+                                      Label="Background Color"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Style="margin-bottom: 12px;"
+                                      HelperText="e.g., #ffffff, white" />
+
+                        <MudNumericField @bind-Value="signature.LineWidth"
+                                         Label="Line Width (px)"
+                                         Variant="Variant.Outlined"
+                                         Margin="Margin.Dense"
+                                         Min="1"
+                                         Max="10"
+                                         Style="margin-bottom: 12px;" />
+
+                        <MudCheckBox @bind-Value="signature.IsRequired"
+                                     Label="Required Field"
+                                     Color="Color.Primary" />
+                    }
+                    else if (selectedElement is TableElement table)
+                    {
+                        <MudTextField @bind-Value="table.Label"
+                                      Label="Label"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Style="margin-bottom: 12px;" />
+
+                        <MudText Typo="Typo.subtitle2" Style="margin-bottom: 8px; font-weight: 600;">
+                            Table Structure
+                        </MudText>
+
+                        <!-- Row Management -->
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                            <MudText Typo="Typo.body2" Style="min-width: 60px;">Rows: @table.Rows</MudText>
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Primary"
+                                       Size="Size.Small"
+                                       OnClick="() => AddTableRow(table)">
+                                Add Row
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Error"
+                                       Size="Size.Small"
+                                       Disabled="@(table.Rows <= 1)"
+                                       OnClick="() => RemoveTableRow(table)">
+                                Remove Row
+                            </MudButton>
+                        </div>
+
+                        <!-- Column Management -->
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                            <MudText Typo="Typo.body2" Style="min-width: 60px;">Columns: @table.Columns</MudText>
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Primary"
+                                       Size="Size.Small"
+                                       OnClick="() => AddTableColumn(table)">
+                                Add Column
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Error"
+                                       Size="Size.Small"
+                                       Disabled="@(table.Columns <= 1)"
+                                       OnClick="() => RemoveTableColumn(table)">
+                                Remove Column
+                            </MudButton>
+                        </div>
+
+                        <MudTextField @bind-Value="table.BorderColor"
+                                      Label="Border Color"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Style="margin-bottom: 12px;"
+                                      HelperText="e.g., #cccccc, gray" />
+
+                        <MudCheckBox @bind-Value="table.ShowHeaders"
+                                     Label="Show Headers"
+                                     Color="Color.Primary" />
+
+                        <MudCheckBox @bind-Value="table.IsRequired"
+                                     Label="Required Field"
+                                     Color="Color.Primary" />
+                    }
+                    }
+
+                    <!-- Layer Controls -->
+                    <MudText Typo="Typo.subtitle2" Style="margin-top: 24px; margin-bottom: 8px; font-weight: 600;">
+                        Layer Order
+                    </MudText>
+                    <div style="display: flex; gap: 8px;">
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Default"
+                                   StartIcon="@Icons.Material.Filled.FlipToFront"
+                                   OnClick="BringToFront"
+                                   FullWidth="true"
+                                   Size="Size.Small">
+                            To Front
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Default"
+                                   StartIcon="@Icons.Material.Filled.FlipToBack"
+                                   OnClick="SendToBack"
+                                   FullWidth="true"
+                                   Size="Size.Small">
+                            To Back
+                        </MudButton>
+                    </div>
+
+                    <!-- Duplicate Button -->
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.ContentCopy"
+                               OnClick="DuplicateSelectedElement"
+                               FullWidth="true"
+                               Style="margin-top: 12px;">
+                        Duplicate (Ctrl+D)
+                    </MudButton>
 
                     <!-- Delete Button -->
                     <MudButton Variant="Variant.Filled"
@@ -145,8 +532,8 @@
                                StartIcon="@Icons.Material.Filled.Delete"
                                OnClick="DeleteSelectedElement"
                                FullWidth="true"
-                               Style="margin-top: 24px;">
-                        Delete Element
+                               Style="margin-top: 12px;">
+                        Delete @(multipleSelected ? $"({selectedElements.Count})" : "Element")
                     </MudButton>
                 </MudPaper>
 
@@ -194,6 +581,8 @@
 <!-- Snackbar for notifications -->
 <MudSnackbarProvider />
 
+@implements IAsyncDisposable
+
 @code {
     private FormTemplate currentTemplate = new FormTemplate
     {
@@ -203,15 +592,132 @@
 
     private FormElement? selectedElement;
     private ElementLibrary? elementLibrary;
+    private Canvas? canvasRef;
+    private System.Threading.Timer? autoSaveTimer;
+    private bool hasUnsavedChanges = false;
+    private DateTime? lastSaveTime;
+    private DotNetObjectReference<Editor>? dotNetHelper;
+    private FormElement? clipboardElement; // For copy/paste
+    private string optionsText = ""; // For dropdown options editing
+    private string radioOptionsText = ""; // For radio group options editing
+    private string fileExtensionsText = ""; // For file upload extensions editing
 
     [Inject]
     private ISnackbar Snackbar { get; set; } = default!;
 
+    [Inject]
+    private FormMaker.Client.Services.LocalStorageService LocalStorage { get; set; } = default!;
+
+    [Inject]
+    private FormMaker.Client.Services.HistoryService historyService { get; set; } = default!;
+
+    [Inject]
+    private NavigationManager Navigation { get; set; } = default!;
+
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; } = default!;
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "id")]
+    public string? FormId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load form if ID is provided in query string
+        if (!string.IsNullOrEmpty(FormId) && Guid.TryParse(FormId, out var formGuid))
+        {
+            await LoadForm(formGuid);
+        }
+
+        // Record initial state
+        RecordHistory();
+
+        // Subscribe to history changes
+        historyService.OnStateChanged += StateHasChanged;
+
+        // Start auto-save timer (every 30 seconds)
+        autoSaveTimer = new System.Threading.Timer(async _ => await AutoSave(), null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetHelper = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("keyboardShortcuts.initialize", dotNetHelper);
+        }
+    }
+
+    private async Task LoadForm(Guid formId)
+    {
+        try
+        {
+            var loadedForm = await LocalStorage.LoadFormAsync(formId);
+            if (loadedForm != null)
+            {
+                currentTemplate = loadedForm;
+                hasUnsavedChanges = false;
+                Snackbar.Add($"'{currentTemplate.Name}' loaded successfully!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Form not found", Severity.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading form: {ex.Message}", Severity.Error);
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        autoSaveTimer?.Dispose();
+        historyService.OnStateChanged -= StateHasChanged;
+
+        if (dotNetHelper != null)
+        {
+            await JSRuntime.InvokeVoidAsync("keyboardShortcuts.cleanup");
+            dotNetHelper.Dispose();
+        }
+    }
+
+    private void RecordHistory()
+    {
+        historyService.RecordState(currentTemplate);
+    }
+
+    private void Undo()
+    {
+        var previousTemplate = historyService.Undo(currentTemplate);
+        if (previousTemplate != null)
+        {
+            currentTemplate = previousTemplate;
+            selectedElement = null;
+            hasUnsavedChanges = true;
+            StateHasChanged();
+        }
+    }
+
+    private void Redo()
+    {
+        var nextTemplate = historyService.Redo();
+        if (nextTemplate != null)
+        {
+            currentTemplate = nextTemplate;
+            selectedElement = null;
+            hasUnsavedChanges = true;
+            StateHasChanged();
+        }
+    }
+
     private void HandleElementAdded(FormElement element)
     {
+        RecordHistory(); // Record state before change
         currentTemplate.AddElement(element);
         selectedElement = element;
         element.IsSelected = true;
+        hasUnsavedChanges = true;
 
         Snackbar.Add($"{element.GetDisplayName()} added to canvas", Severity.Success);
         StateHasChanged();
@@ -220,36 +726,384 @@
     private void HandleElementSelected(FormElement element)
     {
         selectedElement = element;
+
+        // Initialize optionsText when a dropdown is selected
+        if (element is DropdownElement dropdown)
+        {
+            optionsText = string.Join(Environment.NewLine, dropdown.Options);
+        }
+
+        // Initialize radioOptionsText when a radio group is selected
+        if (element is RadioGroupElement radioGroup)
+        {
+            radioOptionsText = string.Join(Environment.NewLine, radioGroup.Options);
+        }
+
+        // Initialize fileExtensionsText when a file upload is selected
+        if (element is FileUploadElement fileUpload)
+        {
+            fileExtensionsText = string.Join(", ", fileUpload.AllowedExtensions);
+        }
+
         StateHasChanged();
     }
 
     private void HandleElementDropped(FormElement element)
     {
+        RecordHistory(); // Record state after drag
         currentTemplate.MarkAsUpdated();
+        hasUnsavedChanges = true;
+        StateHasChanged();
+    }
+
+    private void UpdateDropdownOptions(DropdownElement dropdown)
+    {
+        // Parse the multiline options text into a list
+        var options = optionsText
+            .Split(new[] { Environment.NewLine, "\n" }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(o => o.Trim())
+            .Where(o => !string.IsNullOrWhiteSpace(o))
+            .ToList();
+
+        if (options.Count > 0)
+        {
+            dropdown.Options = options;
+            hasUnsavedChanges = true;
+        }
+    }
+
+    private void UpdateRadioOptions(RadioGroupElement radioGroup)
+    {
+        // Parse the multiline options text into a list
+        var options = radioOptionsText
+            .Split(new[] { Environment.NewLine, "\n" }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(o => o.Trim())
+            .Where(o => !string.IsNullOrWhiteSpace(o))
+            .ToList();
+
+        if (options.Count > 0)
+        {
+            radioGroup.Options = options;
+            hasUnsavedChanges = true;
+        }
+    }
+
+    private void UpdateFileExtensions(FileUploadElement fileUpload)
+    {
+        // Parse the comma-separated extensions into a list
+        var extensions = fileExtensionsText
+            .Split(new[] { ",", ";", " " }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(e => e.Trim())
+            .Where(e => !string.IsNullOrWhiteSpace(e))
+            .Select(e => e.StartsWith(".") ? e : "." + e) // Ensure each extension starts with a dot
+            .ToList();
+
+        if (extensions.Count > 0)
+        {
+            fileUpload.AllowedExtensions = extensions;
+            hasUnsavedChanges = true;
+        }
+    }
+
+    private void AddTableRow(TableElement table)
+    {
+        table.AddRow();
+        hasUnsavedChanges = true;
+        StateHasChanged();
+    }
+
+    private void RemoveTableRow(TableElement table)
+    {
+        table.RemoveRow();
+        hasUnsavedChanges = true;
+        StateHasChanged();
+    }
+
+    private void AddTableColumn(TableElement table)
+    {
+        table.AddColumn();
+        hasUnsavedChanges = true;
+        StateHasChanged();
+    }
+
+    private void RemoveTableColumn(TableElement table)
+    {
+        table.RemoveColumn();
+        hasUnsavedChanges = true;
         StateHasChanged();
     }
 
     private void DeleteSelectedElement()
     {
-        if (selectedElement != null)
+        var selectedElements = currentTemplate.Elements.Where(e => e.IsSelected).ToList();
+
+        if (selectedElements.Count > 0)
         {
-            currentTemplate.RemoveElement(selectedElement.Id);
-            Snackbar.Add($"{selectedElement.GetDisplayName()} deleted", Severity.Info);
+            RecordHistory(); // Record state before delete
+
+            foreach (var element in selectedElements)
+            {
+                currentTemplate.RemoveElement(element.Id);
+            }
+
+            if (selectedElements.Count == 1)
+            {
+                Snackbar.Add($"{selectedElements[0].GetDisplayName()} deleted", Severity.Info);
+            }
+            else
+            {
+                Snackbar.Add($"{selectedElements.Count} elements deleted", Severity.Info);
+            }
+
             selectedElement = null;
+            hasUnsavedChanges = true;
             StateHasChanged();
         }
     }
 
-    private void SaveForm()
+    private async Task SaveForm()
     {
-        // TODO: Implement actual save to localStorage or API
-        currentTemplate.MarkAsUpdated();
-        Snackbar.Add($"Form '{currentTemplate.Name}' saved successfully!", Severity.Success);
+        try
+        {
+            await LocalStorage.SaveFormAsync(currentTemplate);
+            hasUnsavedChanges = false;
+            lastSaveTime = DateTime.Now;
+            Snackbar.Add($"'{currentTemplate.Name}' saved successfully!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error saving form: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task AutoSave()
+    {
+        if (hasUnsavedChanges && currentTemplate.Elements.Count > 0)
+        {
+            try
+            {
+                await LocalStorage.SaveFormAsync(currentTemplate);
+                hasUnsavedChanges = false;
+                lastSaveTime = DateTime.Now;
+
+                // Show subtle notification for auto-save
+                await InvokeAsync(() =>
+                {
+                    Snackbar.Add("Auto-saved", Severity.Info, config =>
+                    {
+                        config.VisibleStateDuration = 1000;
+                    });
+                    StateHasChanged();
+                });
+            }
+            catch
+            {
+                // Silently fail auto-save, user can manually save
+            }
+        }
     }
 
     private void PreviewForm()
     {
         // TODO: Implement preview mode
         Snackbar.Add("Preview mode coming soon!", Severity.Info);
+    }
+
+    // Zoom handler methods
+    private void ZoomIn()
+    {
+        canvasRef?.ZoomIn();
+        StateHasChanged();
+    }
+
+    private void ZoomOut()
+    {
+        canvasRef?.ZoomOut();
+        StateHasChanged();
+    }
+
+    private void ResetZoom()
+    {
+        canvasRef?.ResetZoom();
+        StateHasChanged();
+    }
+
+    // Layer order methods
+    private void BringToFront()
+    {
+        if (selectedElement != null)
+        {
+            RecordHistory(); // Record state before change
+
+            // Find the highest z-index and set one higher
+            var maxZIndex = currentTemplate.Elements.Max(e => e.Properties.ZIndex);
+            selectedElement.Properties.ZIndex = maxZIndex + 1;
+
+            hasUnsavedChanges = true;
+            Snackbar.Add("Element brought to front", Severity.Info);
+            StateHasChanged();
+        }
+    }
+
+    private void SendToBack()
+    {
+        if (selectedElement != null)
+        {
+            RecordHistory(); // Record state before change
+
+            // Find the lowest z-index and set one lower
+            var minZIndex = currentTemplate.Elements.Min(e => e.Properties.ZIndex);
+            selectedElement.Properties.ZIndex = minZIndex - 1;
+
+            hasUnsavedChanges = true;
+            Snackbar.Add("Element sent to back", Severity.Info);
+            StateHasChanged();
+        }
+    }
+
+    // Keyboard shortcut handlers
+    [JSInvokable]
+    public void OnUndo()
+    {
+        Undo();
+    }
+
+    [JSInvokable]
+    public void OnRedo()
+    {
+        Redo();
+    }
+
+    [JSInvokable]
+    public void OnDuplicate()
+    {
+        DuplicateSelectedElement();
+    }
+
+    private void DuplicateSelectedElement()
+    {
+        if (selectedElement == null)
+        {
+            Snackbar.Add("No element selected to duplicate", Severity.Warning);
+            return;
+        }
+
+        RecordHistory(); // Record state before duplication
+
+        // Serialize and deserialize for deep copy
+        var json = System.Text.Json.JsonSerializer.Serialize(selectedElement);
+        var duplicatedElement = System.Text.Json.JsonSerializer.Deserialize<FormElement>(json);
+
+        if (duplicatedElement != null)
+        {
+            // Generate new ID
+            duplicatedElement.Id = Guid.NewGuid();
+
+            // Offset position so it's visible (20px down and right)
+            duplicatedElement.X += 20;
+            duplicatedElement.Y += 20;
+
+            // Ensure it stays within canvas bounds
+            if (duplicatedElement.X + duplicatedElement.Width > currentTemplate.WidthInPixels)
+            {
+                duplicatedElement.X = currentTemplate.WidthInPixels - duplicatedElement.Width - 10;
+            }
+            if (duplicatedElement.Y + duplicatedElement.Height > currentTemplate.HeightInPixels)
+            {
+                duplicatedElement.Y = currentTemplate.HeightInPixels - duplicatedElement.Height - 10;
+            }
+
+            // Deselect current, add new element, and select it
+            currentTemplate.ClearSelection();
+            currentTemplate.AddElement(duplicatedElement);
+            duplicatedElement.IsSelected = true;
+            selectedElement = duplicatedElement;
+
+            hasUnsavedChanges = true;
+            Snackbar.Add($"{duplicatedElement.GetDisplayName()} duplicated", Severity.Success);
+            StateHasChanged();
+        }
+    }
+
+    [JSInvokable]
+    public void OnCopy()
+    {
+        CopySelectedElement();
+    }
+
+    [JSInvokable]
+    public void OnPaste()
+    {
+        PasteElement();
+    }
+
+    [JSInvokable]
+    public void OnDelete()
+    {
+        DeleteSelectedElement();
+    }
+
+    private void CopySelectedElement()
+    {
+        if (selectedElement == null)
+        {
+            Snackbar.Add("No element selected to copy", Severity.Warning);
+            return;
+        }
+
+        // Serialize for deep copy to clipboard
+        var json = System.Text.Json.JsonSerializer.Serialize(selectedElement);
+        clipboardElement = System.Text.Json.JsonSerializer.Deserialize<FormElement>(json);
+
+        Snackbar.Add($"{selectedElement.GetDisplayName()} copied to clipboard", Severity.Info);
+    }
+
+    private void PasteElement()
+    {
+        if (clipboardElement == null)
+        {
+            Snackbar.Add("Nothing to paste", Severity.Warning);
+            return;
+        }
+
+        RecordHistory(); // Record state before paste
+
+        // Serialize and deserialize for deep copy
+        var json = System.Text.Json.JsonSerializer.Serialize(clipboardElement);
+        var pastedElement = System.Text.Json.JsonSerializer.Deserialize<FormElement>(json);
+
+        if (pastedElement != null)
+        {
+            // Generate new ID
+            pastedElement.Id = Guid.NewGuid();
+
+            // Offset position so it's visible (20px down and right from the copied element)
+            pastedElement.X += 20;
+            pastedElement.Y += 20;
+
+            // Ensure it stays within canvas bounds
+            if (pastedElement.X + pastedElement.Width > currentTemplate.WidthInPixels)
+            {
+                pastedElement.X = currentTemplate.WidthInPixels - pastedElement.Width - 10;
+            }
+            if (pastedElement.Y + pastedElement.Height > currentTemplate.HeightInPixels)
+            {
+                pastedElement.Y = currentTemplate.HeightInPixels - pastedElement.Height - 10;
+            }
+
+            // Deselect current, add new element, and select it
+            currentTemplate.ClearSelection();
+            currentTemplate.AddElement(pastedElement);
+            pastedElement.IsSelected = true;
+            selectedElement = pastedElement;
+
+            // Update clipboard to the new pasted element for repeated pastes
+            var newClipboardJson = System.Text.Json.JsonSerializer.Serialize(pastedElement);
+            clipboardElement = System.Text.Json.JsonSerializer.Deserialize<FormElement>(newClipboardJson);
+
+            hasUnsavedChanges = true;
+            Snackbar.Add($"{pastedElement.GetDisplayName()} pasted", Severity.Success);
+            StateHasChanged();
+        }
     }
 }
