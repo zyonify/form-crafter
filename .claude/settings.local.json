@@ -17,7 +17,10 @@
       "Bash(netstat:*)",
       "Bash(findstr:*)",
       "Bash(powershell:*)",
-      "Bash(if exist nul del nul)"
+      "Bash(if exist nul del nul)",
+      "Bash(del FormMaker.TestsUnitTest1.cs)",
+      "Bash(rm:*)",
+      "Bash(dotnet test:*)"
     ],
     "deny": [],
     "ask": []
