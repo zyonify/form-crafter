@@ -3,6 +3,7 @@ using FormMaker.Client.Services;
 using FormMaker.Shared.Enums;
 using FormMaker.Shared.Models;
 using Microsoft.JSInterop;
+using Microsoft.JSInterop.Infrastructure;
 using Moq;
 using System.Text.Json;
 using Xunit;
@@ -33,17 +34,23 @@ public class LocalStorageServiceTests
             PageSize = PageSize.Letter
         };
 
-        string? capturedKey = null;
-        string? capturedJson = null;
+        string? formKey = null;
+        string? formJson = null;
+        var callCount = 0;
 
         _jsRuntimeMock
-            .Setup(x => x.InvokeAsync<object>("localStorage.setItem", It.IsAny<object[]>()))
+            .Setup(x => x.InvokeAsync<IJSVoidResult>("localStorage.setItem", It.IsAny<object[]>()))
             .Callback<string, object[]>((method, args) =>
             {
-                capturedKey = args[0].ToString();
-                capturedJson = args[1].ToString();
+                // First call is for the form, second is for the forms list
+                if (callCount == 0)
+                {
+                    formKey = args[0].ToString();
+                    formJson = args[1].ToString();
+                }
+                callCount++;
             })
-            .ReturnsAsync(new object());
+            .Returns(ValueTask.FromResult<IJSVoidResult>(null!));
 
         _jsRuntimeMock
             .Setup(x => x.InvokeAsync<string>("localStorage.getItem", It.IsAny<object[]>()))
@@ -53,10 +60,10 @@ public class LocalStorageServiceTests
         await _service.SaveFormAsync(form);
 
         // Assert
-        capturedKey.Should().Be($"formmaker_form_{form.Id}");
-        capturedJson.Should().NotBeNullOrEmpty();
+        formKey.Should().Be($"formmaker_form_{form.Id}");
+        formJson.Should().NotBeNullOrEmpty();
 
-        var savedForm = JsonSerializer.Deserialize<FormTemplate>(capturedJson!);
+        var savedForm = JsonSerializer.Deserialize<FormTemplate>(formJson!);
         savedForm.Should().NotBeNull();
         savedForm!.Id.Should().Be(form.Id);
         savedForm.Name.Should().Be("Test Form");
@@ -74,8 +81,8 @@ public class LocalStorageServiceTests
         };
 
         _jsRuntimeMock
-            .Setup(x => x.InvokeAsync<object>("localStorage.setItem", It.IsAny<object[]>()))
-            .ReturnsAsync(new object());
+            .Setup(x => x.InvokeAsync<IJSVoidResult>("localStorage.setItem", It.IsAny<object[]>()))
+            .Returns(ValueTask.FromResult<IJSVoidResult>(null!));
 
         _jsRuntimeMock
             .Setup(x => x.InvokeAsync<string>("localStorage.getItem", It.IsAny<object[]>()))
@@ -108,8 +115,8 @@ public class LocalStorageServiceTests
         };
 
         _jsRuntimeMock
-            .Setup(x => x.InvokeAsync<object>("localStorage.setItem", It.IsAny<object[]>()))
-            .ReturnsAsync(new object());
+            .Setup(x => x.InvokeAsync<IJSVoidResult>("localStorage.setItem", It.IsAny<object[]>()))
+            .Returns(ValueTask.FromResult<IJSVoidResult>(null!));
 
         _jsRuntimeMock
             .Setup(x => x.InvokeAsync<string>("localStorage.getItem", It.Is<object[]>(args => args[0].ToString() == "formmaker_forms_list")))
@@ -120,7 +127,7 @@ public class LocalStorageServiceTests
 
         // Assert
         _jsRuntimeMock.Verify(
-            x => x.InvokeAsync<object>("localStorage.setItem",
+            x => x.InvokeAsync<IJSVoidResult>("localStorage.setItem",
                 It.Is<object[]>(args => args[0].ToString() == "formmaker_forms_list")),
             Times.Once);
     }
@@ -281,23 +288,23 @@ public class LocalStorageServiceTests
         var expectedKey = $"formmaker_form_{formId}";
 
         _jsRuntimeMock
-            .Setup(x => x.InvokeAsync<object>("localStorage.removeItem", It.IsAny<object[]>()))
-            .ReturnsAsync(new object());
+            .Setup(x => x.InvokeAsync<IJSVoidResult>("localStorage.removeItem", It.IsAny<object[]>()))
+            .Returns(ValueTask.FromResult<IJSVoidResult>(null!));
 
         _jsRuntimeMock
             .Setup(x => x.InvokeAsync<string>("localStorage.getItem", It.IsAny<object[]>()))
             .ReturnsAsync((string?)null);
 
         _jsRuntimeMock
-            .Setup(x => x.InvokeAsync<object>("localStorage.setItem", It.IsAny<object[]>()))
-            .ReturnsAsync(new object());
+            .Setup(x => x.InvokeAsync<IJSVoidResult>("localStorage.setItem", It.IsAny<object[]>()))
+            .Returns(ValueTask.FromResult<IJSVoidResult>(null!));
 
         // Act
         await _service.DeleteFormAsync(formId);
 
         // Assert
         _jsRuntimeMock.Verify(
-            x => x.InvokeAsync<object>("localStorage.removeItem",
+            x => x.InvokeAsync<IJSVoidResult>("localStorage.removeItem",
                 It.Is<object[]>(args => args[0].ToString() == expectedKey)),
             Times.Once);
     }
@@ -309,23 +316,23 @@ public class LocalStorageServiceTests
         var formId = Guid.NewGuid();
 
         _jsRuntimeMock
-            .Setup(x => x.InvokeAsync<object>("localStorage.removeItem", It.IsAny<object[]>()))
-            .ReturnsAsync(new object());
+            .Setup(x => x.InvokeAsync<IJSVoidResult>("localStorage.removeItem", It.IsAny<object[]>()))
+            .Returns(ValueTask.FromResult<IJSVoidResult>(null!));
 
         _jsRuntimeMock
             .Setup(x => x.InvokeAsync<string>("localStorage.getItem", It.IsAny<object[]>()))
             .ReturnsAsync((string?)null);
 
         _jsRuntimeMock
-            .Setup(x => x.InvokeAsync<object>("localStorage.setItem", It.IsAny<object[]>()))
-            .ReturnsAsync(new object());
+            .Setup(x => x.InvokeAsync<IJSVoidResult>("localStorage.setItem", It.IsAny<object[]>()))
+            .Returns(ValueTask.FromResult<IJSVoidResult>(null!));
 
         // Act
         await _service.DeleteFormAsync(formId);
 
         // Assert
         _jsRuntimeMock.Verify(
-            x => x.InvokeAsync<object>("localStorage.setItem",
+            x => x.InvokeAsync<IJSVoidResult>("localStorage.setItem",
                 It.Is<object[]>(args => args[0].ToString() == "formmaker_forms_list")),
             Times.Once);
     }
@@ -408,12 +415,12 @@ public class LocalStorageServiceTests
             .ReturnsAsync((string?)null);
 
         _jsRuntimeMock
-            .Setup(x => x.InvokeAsync<object>("localStorage.removeItem", It.IsAny<object[]>()))
-            .ReturnsAsync(new object());
+            .Setup(x => x.InvokeAsync<IJSVoidResult>("localStorage.removeItem", It.IsAny<object[]>()))
+            .Returns(ValueTask.FromResult<IJSVoidResult>(null!));
 
         _jsRuntimeMock
-            .Setup(x => x.InvokeAsync<object>("localStorage.setItem", It.IsAny<object[]>()))
-            .ReturnsAsync(new object());
+            .Setup(x => x.InvokeAsync<IJSVoidResult>("localStorage.setItem", It.IsAny<object[]>()))
+            .Returns(ValueTask.FromResult<IJSVoidResult>(null!));
 
         // Act
         await _service.ClearAllFormsAsync();
@@ -421,7 +428,7 @@ public class LocalStorageServiceTests
         // Assert
         // Should delete each form (2 forms) + the forms list
         _jsRuntimeMock.Verify(
-            x => x.InvokeAsync<object>("localStorage.removeItem", It.IsAny<object[]>()),
+            x => x.InvokeAsync<IJSVoidResult>("localStorage.removeItem", It.IsAny<object[]>()),
             Times.AtLeast(3));
     }
 
@@ -434,8 +441,8 @@ public class LocalStorageServiceTests
             .ReturnsAsync((string?)null);
 
         _jsRuntimeMock
-            .Setup(x => x.InvokeAsync<object>("localStorage.removeItem", It.IsAny<object[]>()))
-            .ReturnsAsync(new object());
+            .Setup(x => x.InvokeAsync<IJSVoidResult>("localStorage.removeItem", It.IsAny<object[]>()))
+            .Returns(ValueTask.FromResult<IJSVoidResult>(null!));
 
         // Act
         Func<Task> act = async () => await _service.ClearAllFormsAsync();

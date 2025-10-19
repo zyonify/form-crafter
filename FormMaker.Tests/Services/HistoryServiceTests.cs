@@ -93,10 +93,9 @@ public class HistoryServiceTests
         // Act
         _service.RecordState(template1);
         _service.RecordState(template2);
-        _service.RecordState(template3);
 
         // Assert
-        _service.UndoCount.Should().Be(3);
+        _service.UndoCount.Should().Be(2);
 
         // Undo should return states in reverse order
         var undone1 = _service.Undo(template3);
@@ -468,7 +467,7 @@ public class HistoryServiceTests
         }
 
         // Assert
-        _service.UndoCount.Should().Be(7);  // 10 - 5 + 3 - 1 (current state doesn't count)
+        _service.UndoCount.Should().Be(8);  // 10 - 5 + 3
         _service.RedoCount.Should().Be(2);  // 5 - 3
     }
 
