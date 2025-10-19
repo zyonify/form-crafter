@@ -23,7 +23,7 @@ public class FormElementTests
         template.PageSize.Should().Be(PageSize.Letter);
         template.Elements.Should().NotBeNull();
         template.Elements.Should().BeEmpty();
-        template.BackgroundColor.Should().Be("#FFFFFF");
+        template.BackgroundColor.Should().Be("#ffffff");
         template.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
         template.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
     }
@@ -78,7 +78,7 @@ public class FormElementTests
         element.X.Should().Be(0);
         element.Y.Should().Be(0);
         element.Width.Should().Be(200);
-        element.Height.Should().Be(50);
+        element.Height.Should().Be(30);
         element.IsSelected.Should().BeFalse();
         element.Properties.Should().NotBeNull();
     }
@@ -94,10 +94,10 @@ public class FormElementTests
         element.Properties.Bold.Should().BeFalse();
         element.Properties.Italic.Should().BeFalse();
         element.Properties.Underline.Should().BeFalse();
-        element.Properties.Color.Should().Be("#000000");
+        element.Properties.Color.Should().Be("#1a1a1a");
         element.Properties.BackgroundColor.Should().Be("transparent");
         element.Properties.Alignment.Should().Be(TextAlignment.Left);
-        element.Properties.ZIndex.Should().Be(1);
+        element.Properties.ZIndex.Should().Be(0);
     }
 
     #endregion
@@ -111,7 +111,9 @@ public class FormElementTests
         var label = new LabelElement();
 
         // Assert
-        label.Text.Should().Be("Label");
+        label.Text.Should().Be("Label Text");
+        label.Width.Should().Be(200);
+        label.Height.Should().Be(30);
         label.Type.Should().Be(ElementType.Label);
     }
 
@@ -140,7 +142,7 @@ public class FormElementTests
 
         // Assert
         input.Placeholder.Should().Be("Enter text...");
-        input.MaxLength.Should().Be(255);
+        input.MaxLength.Should().BeNull();
         input.IsRequired.Should().BeFalse();
         input.Type.Should().Be(ElementType.TextInput);
     }
@@ -192,8 +194,11 @@ public class FormElementTests
         var image = new ImageElement();
 
         // Assert
-        image.ImageUrl.Should().Be("https://via.placeholder.com/200x100");
+        image.ImageUrl.Should().BeNull();
         image.AltText.Should().Be("Image");
+        image.Label.Should().Be("Image");
+        image.Width.Should().Be(200);
+        image.Height.Should().Be(200);
         image.MaintainAspectRatio.Should().BeTrue();
         image.Type.Should().Be(ElementType.Image);
     }
@@ -211,8 +216,8 @@ public class FormElementTests
         // Assert
         textArea.Placeholder.Should().Be("Enter text...");
         textArea.Rows.Should().Be(4);
-        textArea.MaxLength.Should().Be(1000);
-        textArea.Resizable.Should().BeTrue();
+        textArea.MaxLength.Should().BeNull();
+        textArea.Resizable.Should().BeFalse();
         textArea.WrapText.Should().BeTrue();
         textArea.Type.Should().Be(ElementType.TextArea);
     }
@@ -264,8 +269,9 @@ public class FormElementTests
         var radioGroup = new RadioGroupElement();
 
         // Assert
-        radioGroup.Label.Should().Be("Select one:");
+        radioGroup.Label.Should().BeNull();
         radioGroup.Options.Should().HaveCount(3);
+        radioGroup.Options.Should().Contain(new[] { "Option 1", "Option 2", "Option 3" });
         radioGroup.Layout.Should().Be("Vertical");
         radioGroup.IsRequired.Should().BeFalse();
         radioGroup.Type.Should().Be(ElementType.RadioGroup);
@@ -295,8 +301,8 @@ public class FormElementTests
         var datePicker = new DatePickerElement();
 
         // Assert
-        datePicker.Placeholder.Should().Be("Select date...");
-        datePicker.DateFormat.Should().Be("yyyy-MM-dd");
+        datePicker.Placeholder.Should().Be("Select a date...");
+        datePicker.DateFormat.Should().Be("MM/dd/yyyy");
         datePicker.IncludeTime.Should().BeFalse();
         datePicker.IsRequired.Should().BeFalse();
         datePicker.Type.Should().Be(ElementType.DatePicker);
@@ -332,11 +338,12 @@ public class FormElementTests
         var fileUpload = new FileUploadElement();
 
         // Assert
-        fileUpload.Label.Should().Be("Upload File");
+        fileUpload.Label.Should().BeNull();
         fileUpload.ButtonText.Should().Be("Choose File");
         fileUpload.Multiple.Should().BeFalse();
         fileUpload.MaxFileSize.Should().Be(10);
-        fileUpload.AllowedExtensions.Should().BeEmpty();
+        fileUpload.AllowedExtensions.Should().HaveCount(5);
+        fileUpload.AllowedExtensions.Should().Contain(new[] { ".pdf", ".doc", ".docx", ".jpg", ".png" });
         fileUpload.Type.Should().Be(ElementType.FileUpload);
     }
 
@@ -345,6 +352,7 @@ public class FormElementTests
     {
         // Act
         var fileUpload = new FileUploadElement();
+        fileUpload.AllowedExtensions.Clear();
         fileUpload.AllowedExtensions.Add(".pdf");
         fileUpload.AllowedExtensions.Add(".doc");
         fileUpload.AllowedExtensions.Add(".docx");

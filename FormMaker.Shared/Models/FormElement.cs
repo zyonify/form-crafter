@@ -1,10 +1,24 @@
 using FormMaker.Shared.Enums;
+using FormMaker.Shared.Models.Elements;
+using System.Text.Json.Serialization;
 
 namespace FormMaker.Shared.Models;
 
 /// <summary>
 /// Base class for all form elements
 /// </summary>
+[JsonDerivedType(typeof(LabelElement), typeDiscriminator: "label")]
+[JsonDerivedType(typeof(TextInputElement), typeDiscriminator: "textInput")]
+[JsonDerivedType(typeof(CheckboxElement), typeDiscriminator: "checkbox")]
+[JsonDerivedType(typeof(ImageElement), typeDiscriminator: "image")]
+[JsonDerivedType(typeof(TextAreaElement), typeDiscriminator: "textArea")]
+[JsonDerivedType(typeof(DropdownElement), typeDiscriminator: "dropdown")]
+[JsonDerivedType(typeof(RadioGroupElement), typeDiscriminator: "radioGroup")]
+[JsonDerivedType(typeof(DatePickerElement), typeDiscriminator: "datePicker")]
+[JsonDerivedType(typeof(FileUploadElement), typeDiscriminator: "fileUpload")]
+[JsonDerivedType(typeof(SignatureElement), typeDiscriminator: "signature")]
+[JsonDerivedType(typeof(DividerElement), typeDiscriminator: "divider")]
+[JsonDerivedType(typeof(TableElement), typeDiscriminator: "table")]
 public abstract class FormElement
 {
     /// <summary>
