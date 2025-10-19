@@ -39,6 +39,69 @@
         <span>Checkbox</span>
     </div>
 
+    <div class="element-library-item draggable"
+         draggable="true"
+         @ondragstart="() => HandleDragStart(ElementType.TextArea)"
+         @onclick="() => AddElement(ElementType.TextArea)">
+        <MudIcon Icon="@Icons.Material.Filled.Subject" Size="Size.Large" />
+        <span>Text Area</span>
+    </div>
+
+    <div class="element-library-item draggable"
+         draggable="true"
+         @ondragstart="() => HandleDragStart(ElementType.Dropdown)"
+         @onclick="() => AddElement(ElementType.Dropdown)">
+        <MudIcon Icon="@Icons.Material.Filled.ArrowDropDownCircle" Size="Size.Large" />
+        <span>Dropdown</span>
+    </div>
+
+    <div class="element-library-item draggable"
+         draggable="true"
+         @ondragstart="() => HandleDragStart(ElementType.DatePicker)"
+         @onclick="() => AddElement(ElementType.DatePicker)">
+        <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Size="Size.Large" />
+        <span>Date Picker</span>
+    </div>
+
+    <div class="element-library-item draggable"
+         draggable="true"
+         @ondragstart="() => HandleDragStart(ElementType.RadioGroup)"
+         @onclick="() => AddElement(ElementType.RadioGroup)">
+        <MudIcon Icon="@Icons.Material.Filled.RadioButtonChecked" Size="Size.Large" />
+        <span>Radio Group</span>
+    </div>
+
+    <div class="element-library-item draggable"
+         draggable="true"
+         @ondragstart="() => HandleDragStart(ElementType.FileUpload)"
+         @onclick="() => AddElement(ElementType.FileUpload)">
+        <MudIcon Icon="@Icons.Material.Filled.UploadFile" Size="Size.Large" />
+        <span>File Upload</span>
+    </div>
+
+    <MudDivider Style="margin: 16px 0;" />
+
+    <!-- Advanced Elements -->
+    <MudText Typo="Typo.subtitle2" Style="margin-bottom: 12px; font-weight: 600; color: #666;">
+        ADVANCED
+    </MudText>
+
+    <div class="element-library-item draggable"
+         draggable="true"
+         @ondragstart="() => HandleDragStart(ElementType.Signature)"
+         @onclick="() => AddElement(ElementType.Signature)">
+        <MudIcon Icon="@Icons.Material.Filled.Draw" Size="Size.Large" />
+        <span>Signature Pad</span>
+    </div>
+
+    <div class="element-library-item draggable"
+         draggable="true"
+         @ondragstart="() => HandleDragStart(ElementType.Table)"
+         @onclick="() => AddElement(ElementType.Table)">
+        <MudIcon Icon="@Icons.Material.Filled.TableChart" Size="Size.Large" />
+        <span>Table / Grid</span>
+    </div>
+
     <MudDivider Style="margin: 16px 0;" />
 
     <!-- Media Elements -->
@@ -52,6 +115,21 @@
          @onclick="() => AddElement(ElementType.Image)">
         <MudIcon Icon="@Icons.Material.Filled.Image" Size="Size.Large" />
         <span>Image / Logo</span>
+    </div>
+
+    <MudDivider Style="margin: 16px 0;" />
+
+    <!-- Layout Elements -->
+    <MudText Typo="Typo.subtitle2" Style="margin-bottom: 12px; font-weight: 600; color: #666;">
+        LAYOUT
+    </MudText>
+
+    <div class="element-library-item draggable"
+         draggable="true"
+         @ondragstart="() => HandleDragStart(ElementType.Divider)"
+         @onclick="() => AddElement(ElementType.Divider)">
+        <MudIcon Icon="@Icons.Material.Filled.HorizontalRule" Size="Size.Large" />
+        <span>Divider / Line</span>
     </div>
 
     <MudDivider Style="margin: 16px 0;" />
@@ -94,6 +172,14 @@
             ElementType.Label => new LabelElement(),
             ElementType.Checkbox => new CheckboxElement(),
             ElementType.Image => new ImageElement(),
+            ElementType.TextArea => new TextAreaElement(),
+            ElementType.Dropdown => new DropdownElement(),
+            ElementType.DatePicker => new DatePickerElement(),
+            ElementType.Divider => new DividerElement(),
+            ElementType.RadioGroup => new RadioGroupElement(),
+            ElementType.FileUpload => new FileUploadElement(),
+            ElementType.Signature => new SignatureElement(),
+            ElementType.Table => new TableElement(),
             _ => throw new ArgumentException($"Unknown element type: {type}")
         };
     }

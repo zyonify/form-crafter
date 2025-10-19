@@ -175,6 +175,25 @@ a:hover {
     width: 100%;
 }
 
+/* Smart spacing guides */
+.spacing-guide {
+    position: absolute;
+    background-color: #4CAF50;
+    z-index: 999;
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.spacing-guide.vertical {
+    width: 2px;
+    height: 100%;
+}
+
+.spacing-guide.horizontal {
+    height: 2px;
+    width: 100%;
+}
+
 /* Position indicator tooltip */
 .position-indicator {
     position: fixed;
