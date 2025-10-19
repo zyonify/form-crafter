@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormMaker.Client", "FormMak
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormMaker.Shared", "FormMaker.Shared\FormMaker.Shared.csproj", "{B9431588-6F68-4BE5-BC7D-227A7C3C2665}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormMaker.Tests", "FormMaker.Tests\FormMaker.Tests.csproj", "{869C9519-90BC-4E74-B0E6-0ECC6660AAB3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{B9431588-6F68-4BE5-BC7D-227A7C3C2665}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B9431588-6F68-4BE5-BC7D-227A7C3C2665}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B9431588-6F68-4BE5-BC7D-227A7C3C2665}.Release|Any CPU.Build.0 = Release|Any CPU
+		{869C9519-90BC-4E74-B0E6-0ECC6660AAB3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{869C9519-90BC-4E74-B0E6-0ECC6660AAB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{869C9519-90BC-4E74-B0E6-0ECC6660AAB3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{869C9519-90BC-4E74-B0E6-0ECC6660AAB3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
