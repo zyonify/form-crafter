@@ -274,18 +274,49 @@ public partial class Canvas : IAsyncDisposable
 
     private RenderFragment RenderElement(FormElement element) => builder =>
     {
+        // Get box shadow CSS based on preset
+        var boxShadow = element.Properties.BoxShadow switch
+        {
+            "small" => $"0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)",
+            "medium" => $"0 3px 6px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.12)",
+            "large" => $"0 10px 20px rgba(0,0,0,0.15), 0 3px 6px rgba(0,0,0,0.10)",
+            _ => "none"
+        };
+
+        // Apply background color with opacity
+        var bgColor = element.Properties.BackgroundColor;
+        if (element.Properties.BackgroundOpacity < 1.0 && bgColor != "transparent")
+        {
+            // Convert hex to rgba if needed
+            if (bgColor.StartsWith("#"))
+            {
+                var hex = bgColor.TrimStart('#');
+                if (hex.Length == 6)
+                {
+                    var r = Convert.ToInt32(hex.Substring(0, 2), 16);
+                    var g = Convert.ToInt32(hex.Substring(2, 2), 16);
+                    var b = Convert.ToInt32(hex.Substring(4, 2), 16);
+                    bgColor = $"rgba({r},{g},{b},{element.Properties.BackgroundOpacity})";
+                }
+            }
+        }
+
         var style = $"width: 100%; height: 100%; " +
                     $"font-size: {element.Properties.FontSize}px; " +
                     $"font-family: {element.Properties.FontFamily}; " +
                     $"color: {element.Properties.Color}; " +
-                    $"background-color: {element.Properties.BackgroundColor}; " +
+                    $"background-color: {bgColor}; " +
                     $"border: {element.Properties.BorderWidth}px {element.Properties.BorderStyle} {element.Properties.BorderColor}; " +
                     $"border-radius: {element.Properties.BorderRadius}px; " +
                     $"padding: {element.Properties.GetPaddingCss()}; " +
+                    $"margin: {element.Properties.GetMarginCss()}; " +
                     $"text-align: {element.Properties.Alignment.ToString().ToLower()}; " +
                     $"font-weight: {(element.Properties.Bold ? "bold" : "normal")}; " +
                     $"font-style: {(element.Properties.Italic ? "italic" : "normal")}; " +
                     $"text-decoration: {(element.Properties.Underline ? "underline" : "none")}; " +
+                    $"opacity: {element.Properties.Opacity}; " +
+                    $"box-shadow: {boxShadow}; " +
+                    $"transform: rotate({element.Properties.Rotation}deg); " +
                     $"pointer-events: none;"; // Prevent child elements from blocking drag
 
         switch (element)

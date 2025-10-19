@@ -537,27 +537,229 @@
                     </MudButton>
                 </MudPaper>
 
-                <!-- Styling Properties -->
+                <!-- Advanced Styling Properties -->
                 <MudPaper Elevation="0" Style="padding: 16px; background-color: white;">
                     <MudText Typo="Typo.subtitle1" Style="font-weight: 600; margin-bottom: 12px;">
                         Styling
                     </MudText>
 
-                    <MudNumericField @bind-Value="selectedElement.Properties.FontSize"
-                                     Label="Font Size"
-                                     Variant="Variant.Outlined"
-                                     Margin="Margin.Dense"
-                                     Min="12"
-                                     Max="72"
-                                     Style="margin-bottom: 12px;" />
+                    <MudExpansionPanels MultiExpansion="true">
+                        <!-- Text Styling -->
+                        <MudExpansionPanel Text="Text" IsInitiallyExpanded="true">
+                            <MudNumericField @bind-Value="selectedElement.Properties.FontSize"
+                                             Label="Font Size"
+                                             Variant="Variant.Outlined"
+                                             Margin="Margin.Dense"
+                                             Min="12"
+                                             Max="72"
+                                             Style="margin-bottom: 12px;" />
 
-                    <MudCheckBox @bind-Value="selectedElement.Properties.Bold"
-                                 Label="Bold"
-                                 Color="Color.Primary" />
+                            <MudTextField @bind-Value="selectedElement.Properties.Color"
+                                          Label="Text Color"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          Style="margin-bottom: 12px;"
+                                          HelperText="e.g., #1a1a1a, red, rgb(26,26,26)" />
 
-                    <MudCheckBox @bind-Value="selectedElement.Properties.Italic"
-                                 Label="Italic"
-                                 Color="Color.Primary" />
+                            <MudSelect @bind-Value="selectedElement.Properties.Alignment"
+                                       Label="Text Alignment"
+                                       Variant="Variant.Outlined"
+                                       Margin="Margin.Dense"
+                                       Style="margin-bottom: 12px;">
+                                <MudSelectItem Value="FormMaker.Shared.Enums.TextAlignment.Left">Left</MudSelectItem>
+                                <MudSelectItem Value="FormMaker.Shared.Enums.TextAlignment.Center">Center</MudSelectItem>
+                                <MudSelectItem Value="FormMaker.Shared.Enums.TextAlignment.Right">Right</MudSelectItem>
+                            </MudSelect>
+
+                            <MudCheckBox @bind-Value="selectedElement.Properties.Bold"
+                                         Label="Bold"
+                                         Color="Color.Primary" />
+
+                            <MudCheckBox @bind-Value="selectedElement.Properties.Italic"
+                                         Label="Italic"
+                                         Color="Color.Primary" />
+
+                            <MudCheckBox @bind-Value="selectedElement.Properties.Underline"
+                                         Label="Underline"
+                                         Color="Color.Primary" />
+                        </MudExpansionPanel>
+
+                        <!-- Background Styling -->
+                        <MudExpansionPanel Text="Background">
+                            <MudTextField @bind-Value="selectedElement.Properties.BackgroundColor"
+                                          Label="Background Color"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          Style="margin-bottom: 12px;"
+                                          HelperText="e.g., #ffffff, transparent, rgba(255,255,255,0.5)" />
+
+                            <MudSlider @bind-Value="selectedElement.Properties.BackgroundOpacity"
+                                       Min="0.0"
+                                       Max="1.0"
+                                       Step="0.1"
+                                       ValueLabel="true"
+                                       Color="Color.Primary">
+                                Background Opacity: @selectedElement.Properties.BackgroundOpacity.ToString("0.0")
+                            </MudSlider>
+                        </MudExpansionPanel>
+
+                        <!-- Border Styling -->
+                        <MudExpansionPanel Text="Border">
+                            <MudSelect @bind-Value="selectedElement.Properties.BorderStyle"
+                                       Label="Border Style"
+                                       Variant="Variant.Outlined"
+                                       Margin="Margin.Dense"
+                                       Style="margin-bottom: 12px;">
+                                <MudSelectItem Value="@("none")">None</MudSelectItem>
+                                <MudSelectItem Value="@("solid")">Solid</MudSelectItem>
+                                <MudSelectItem Value="@("dashed")">Dashed</MudSelectItem>
+                                <MudSelectItem Value="@("dotted")">Dotted</MudSelectItem>
+                            </MudSelect>
+
+                            <MudNumericField @bind-Value="selectedElement.Properties.BorderWidth"
+                                             Label="Border Width (px)"
+                                             Variant="Variant.Outlined"
+                                             Margin="Margin.Dense"
+                                             Min="0"
+                                             Max="20"
+                                             Style="margin-bottom: 12px;" />
+
+                            <MudTextField @bind-Value="selectedElement.Properties.BorderColor"
+                                          Label="Border Color"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          Style="margin-bottom: 12px;"
+                                          HelperText="e.g., #cccccc, gray" />
+
+                            <MudNumericField @bind-Value="selectedElement.Properties.BorderRadius"
+                                             Label="Border Radius (px)"
+                                             Variant="Variant.Outlined"
+                                             Margin="Margin.Dense"
+                                             Min="0"
+                                             Max="50"
+                                             Style="margin-bottom: 12px;" />
+                        </MudExpansionPanel>
+
+                        <!-- Shadow Styling -->
+                        <MudExpansionPanel Text="Shadow">
+                            <MudSelect @bind-Value="selectedElement.Properties.BoxShadow"
+                                       Label="Shadow Preset"
+                                       Variant="Variant.Outlined"
+                                       Margin="Margin.Dense"
+                                       Style="margin-bottom: 12px;">
+                                <MudSelectItem Value="@("none")">None</MudSelectItem>
+                                <MudSelectItem Value="@("small")">Small</MudSelectItem>
+                                <MudSelectItem Value="@("medium")">Medium</MudSelectItem>
+                                <MudSelectItem Value="@("large")">Large</MudSelectItem>
+                            </MudSelect>
+
+                            <MudTextField @bind-Value="selectedElement.Properties.ShadowColor"
+                                          Label="Shadow Color"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          Style="margin-bottom: 12px;"
+                                          HelperText="e.g., #000000, rgba(0,0,0,0.3)" />
+                        </MudExpansionPanel>
+
+                        <!-- Spacing (Padding & Margin) -->
+                        <MudExpansionPanel Text="Spacing">
+                            <MudText Typo="Typo.subtitle2" Style="margin-bottom: 8px; font-weight: 600;">
+                                Padding
+                            </MudText>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px;">
+                                <MudNumericField @bind-Value="selectedElement.Properties.PaddingTop"
+                                                 Label="Top (px)"
+                                                 Variant="Variant.Outlined"
+                                                 Margin="Margin.Dense"
+                                                 Min="0"
+                                                 Max="100" />
+
+                                <MudNumericField @bind-Value="selectedElement.Properties.PaddingRight"
+                                                 Label="Right (px)"
+                                                 Variant="Variant.Outlined"
+                                                 Margin="Margin.Dense"
+                                                 Min="0"
+                                                 Max="100" />
+
+                                <MudNumericField @bind-Value="selectedElement.Properties.PaddingBottom"
+                                                 Label="Bottom (px)"
+                                                 Variant="Variant.Outlined"
+                                                 Margin="Margin.Dense"
+                                                 Min="0"
+                                                 Max="100" />
+
+                                <MudNumericField @bind-Value="selectedElement.Properties.PaddingLeft"
+                                                 Label="Left (px)"
+                                                 Variant="Variant.Outlined"
+                                                 Margin="Margin.Dense"
+                                                 Min="0"
+                                                 Max="100" />
+                            </div>
+
+                            <MudText Typo="Typo.subtitle2" Style="margin-bottom: 8px; font-weight: 600;">
+                                Margin
+                            </MudText>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                <MudNumericField @bind-Value="selectedElement.Properties.MarginTop"
+                                                 Label="Top (px)"
+                                                 Variant="Variant.Outlined"
+                                                 Margin="Margin.Dense"
+                                                 Min="0"
+                                                 Max="100" />
+
+                                <MudNumericField @bind-Value="selectedElement.Properties.MarginRight"
+                                                 Label="Right (px)"
+                                                 Variant="Variant.Outlined"
+                                                 Margin="Margin.Dense"
+                                                 Min="0"
+                                                 Max="100" />
+
+                                <MudNumericField @bind-Value="selectedElement.Properties.MarginBottom"
+                                                 Label="Bottom (px)"
+                                                 Variant="Variant.Outlined"
+                                                 Margin="Margin.Dense"
+                                                 Min="0"
+                                                 Max="100" />
+
+                                <MudNumericField @bind-Value="selectedElement.Properties.MarginLeft"
+                                                 Label="Left (px)"
+                                                 Variant="Variant.Outlined"
+                                                 Margin="Margin.Dense"
+                                                 Min="0"
+                                                 Max="100" />
+                            </div>
+                        </MudExpansionPanel>
+
+                        <!-- Opacity & Transform -->
+                        <MudExpansionPanel Text="Effects">
+                            <MudSlider @bind-Value="selectedElement.Properties.Opacity"
+                                       Min="0.0"
+                                       Max="1.0"
+                                       Step="0.1"
+                                       ValueLabel="true"
+                                       Color="Color.Primary"
+                                       Style="margin-bottom: 16px;">
+                                Opacity: @((int)(selectedElement.Properties.Opacity * 100))%
+                            </MudSlider>
+
+                            <MudNumericField @bind-Value="selectedElement.Properties.Rotation"
+                                             Label="Rotation (degrees)"
+                                             Variant="Variant.Outlined"
+                                             Margin="Margin.Dense"
+                                             Min="-180"
+                                             Max="180"
+                                             Style="margin-bottom: 12px;" />
+
+                            <MudNumericField @bind-Value="selectedElement.Properties.ZIndex"
+                                             Label="Z-Index (Layer Order)"
+                                             Variant="Variant.Outlined"
+                                             Margin="Margin.Dense"
+                                             Min="-100"
+                                             Max="100" />
+                        </MudExpansionPanel>
+                    </MudExpansionPanels>
                 </MudPaper>
             }
             else
