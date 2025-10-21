@@ -82,6 +82,16 @@ public abstract class FormElement
     public string? Placeholder { get; set; }
 
     /// <summary>
+    /// Validation rules for this element
+    /// </summary>
+    public List<ValidationRule> ValidationRules { get; set; } = new();
+
+    /// <summary>
+    /// Custom error message for required field validation
+    /// </summary>
+    public string? RequiredErrorMessage { get; set; }
+
+    /// <summary>
     /// Creates a deep copy of the element
     /// </summary>
     public abstract FormElement Clone();

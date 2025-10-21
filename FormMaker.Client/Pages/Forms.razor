@@ -118,25 +118,28 @@
 </MudContainer>
 
 <!-- Delete Confirmation Dialog -->
-<MudDialog @bind-IsVisible="deleteDialogVisible" Options="dialogOptions">
-    <TitleContent>
-        <MudText Typo="Typo.h6">Delete Form?</MudText>
-    </TitleContent>
-    <DialogContent>
-        <MudText>Are you sure you want to delete <strong>@formToDeleteName</strong>?</MudText>
-        <MudText Typo="Typo.body2" Color="Color.Error" Style="margin-top: 8px;">
-            This action cannot be undone.
-        </MudText>
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="CancelDelete">Cancel</MudButton>
-        <MudButton Color="Color.Error"
-                   Variant="Variant.Filled"
-                   OnClick="ConfirmDelete">
-            Delete
-        </MudButton>
-    </DialogActions>
-</MudDialog>
+@if (deleteDialogVisible)
+{
+    <MudDialog>
+        <TitleContent>
+            <MudText Typo="Typo.h6">Delete Form?</MudText>
+        </TitleContent>
+        <DialogContent>
+            <MudText>Are you sure you want to delete <strong>@formToDeleteName</strong>?</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Error" Style="margin-top: 8px;">
+                This action cannot be undone.
+            </MudText>
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="CancelDelete">Cancel</MudButton>
+            <MudButton Color="Color.Error"
+                       Variant="Variant.Filled"
+                       OnClick="ConfirmDelete">
+                Delete
+            </MudButton>
+        </DialogActions>
+    </MudDialog>
+}
 
 @code {
     private List<FormMetadata>? forms;

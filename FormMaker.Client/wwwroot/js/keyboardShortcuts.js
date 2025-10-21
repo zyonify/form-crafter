@@ -61,6 +61,20 @@ window.keyboardShortcuts = {
                 this.dotNetHelper.invokeMethodAsync('OnDelete');
             }
         }
+        // Ctrl+/ or F1: Show keyboard shortcuts help
+        else if ((isCtrl && e.key === '/') || e.key === 'F1') {
+            e.preventDefault();
+            if (this.dotNetHelper) {
+                this.dotNetHelper.invokeMethodAsync('OnShowKeyboardShortcuts');
+            }
+        }
+        // Ctrl+A: Select all elements on canvas
+        else if (isCtrl && e.key === 'a') {
+            e.preventDefault();
+            if (this.dotNetHelper) {
+                this.dotNetHelper.invokeMethodAsync('OnSelectAll');
+            }
+        }
     },
 
     cleanup: function () {
