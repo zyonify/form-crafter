@@ -21,9 +21,13 @@ public partial class Canvas : IAsyncDisposable
     [Inject]
     private IJSRuntime JSRuntime { get; set; } = default!;
 
+    [Inject]
+    private FormMaker.Client.Services.AccessibilityService AccessibilityService { get; set; } = default!;
+
     private DotNetObjectReference<Canvas>? dotNetHelper;
     private DotNetObjectReference<Canvas>? resizeDotNetHelper;
     private DotNetObjectReference<Canvas>? multiSelectDotNetHelper;
+    private DotNetObjectReference<Canvas>? rotateDotNetHelper;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -32,9 +36,11 @@ public partial class Canvas : IAsyncDisposable
             dotNetHelper = DotNetObjectReference.Create(this);
             resizeDotNetHelper = DotNetObjectReference.Create(this);
             multiSelectDotNetHelper = DotNetObjectReference.Create(this);
+            rotateDotNetHelper = DotNetObjectReference.Create(this);
             await JSRuntime.InvokeVoidAsync("canvasDragHandler.initialize", "main-canvas", dotNetHelper);
             await JSRuntime.InvokeVoidAsync("resizeHandler.initialize", "main-canvas", resizeDotNetHelper);
             await JSRuntime.InvokeVoidAsync("multiSelectHandler.initialize", "main-canvas", multiSelectDotNetHelper);
+            await JSRuntime.InvokeVoidAsync("rotationHandler.initialize", "main-canvas", rotateDotNetHelper);
         }
     }
 
@@ -57,6 +63,12 @@ public partial class Canvas : IAsyncDisposable
             await JSRuntime.InvokeVoidAsync("multiSelectHandler.cleanup");
             multiSelectDotNetHelper.Dispose();
         }
+
+        if (rotateDotNetHelper != null)
+        {
+            await JSRuntime.InvokeVoidAsync("rotationHandler.cleanup");
+            rotateDotNetHelper.Dispose();
+        }
     }
 
     private string GetPageSizeClass()
@@ -77,7 +89,7 @@ public partial class Canvas : IAsyncDisposable
         StateHasChanged();
     }
 
-    private void HandleElementClick(FormElement element)
+    private async void HandleElementClick(FormElement element)
     {
         // Check if Ctrl key is pressed for multi-selection
         // Note: JavaScript interop will be needed to detect Ctrl key
@@ -85,7 +97,10 @@ public partial class Canvas : IAsyncDisposable
         CurrentTemplate.ClearSelection();
         element.IsSelected = true;
 
-        OnElementSelected.InvokeAsync(element);
+        // Announce element selection to screen readers
+        await AccessibilityService.AnnounceElementSelectedAsync(element.GetDisplayName(), element.X, element.Y);
+
+        await OnElementSelected.InvokeAsync(element);
         StateHasChanged();
     }
 
@@ -125,6 +140,9 @@ public partial class Canvas : IAsyncDisposable
         // Initialize drag position to current element position
         dragX = element.X;
         dragY = element.Y;
+
+        // Announce drag start to screen readers
+        await AccessibilityService.AnnounceDragStartAsync(element.GetDisplayName());
 
         // Notify JavaScript to start tracking
         await JSRuntime.InvokeVoidAsync("canvasDragHandler.startDrag", element.Id, dragOffsetX, dragOffsetY);
@@ -175,6 +193,9 @@ public partial class Canvas : IAsyncDisposable
             draggedElement.Y = Math.Max(0, Math.Min(snapY, CurrentTemplate.HeightInPixels - draggedElement.Height));
 
             CurrentTemplate.MarkAsUpdated();
+
+            // Announce drag end to screen readers
+            await AccessibilityService.AnnounceDragEndAsync(draggedElement.GetDisplayName(), draggedElement.X, draggedElement.Y);
 
             // Notify parent component
             await OnElementDropped.InvokeAsync(draggedElement);
@@ -696,6 +717,9 @@ public partial class Canvas : IAsyncDisposable
         resizeX = element.X;
         resizeY = element.Y;
 
+        // Announce resize start to screen readers
+        await AccessibilityService.AnnounceResizeStartAsync(element.GetDisplayName());
+
         // Get canvas-relative coordinates
         var canvasRect = await JSRuntime.InvokeAsync<object>("eval",
             $"document.querySelector('[data-canvas-id=\"main-canvas\"]').getBoundingClientRect()");
@@ -741,12 +765,98 @@ public partial class Canvas : IAsyncDisposable
 
             CurrentTemplate.MarkAsUpdated();
 
+            // Announce resize end to screen readers
+            await AccessibilityService.AnnounceResizeEndAsync(resizedElement.GetDisplayName(), resizedElement.Width, resizedElement.Height);
+
             // Notify parent component
             await OnElementDropped.InvokeAsync(resizedElement);
 
             // Reset resize state
             isResizing = false;
             resizedElement = null;
+
+            StateHasChanged();
+        }
+    }
+
+    // Rotation functionality
+    private async Task HandleRotateStart(MouseEventArgs e, FormElement element)
+    {
+        isRotating = true;
+        rotatedElement = element;
+        initialRotation = element.Properties.Rotation;
+
+        // Calculate center point of element in viewport coordinates
+        int centerX = element.X + element.Width / 2;
+        int centerY = element.Y + element.Height / 2;
+
+        // Get canvas position
+        var canvasBounds = await JSRuntime.InvokeAsync<object>("eval",
+            "(() => { const canvas = document.querySelector('[data-canvas-id=\"main-canvas\"]'); const rect = canvas.getBoundingClientRect(); return { left: rect.left, top: rect.top }; })()");
+
+        var boundsDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, double>>(
+            System.Text.Json.JsonSerializer.Serialize(canvasBounds));
+
+        double canvasLeft = boundsDict?["left"] ?? 0;
+        double canvasTop = boundsDict?["top"] ?? 0;
+
+        // Calculate center in viewport coordinates
+        double viewportCenterX = canvasLeft + (centerX * zoomLevel);
+        double viewportCenterY = canvasTop + (centerY * zoomLevel);
+
+        // Start rotation tracking
+        initialAngle = await JSRuntime.InvokeAsync<double>("rotationHandler.startRotate",
+            element.Id.ToString(),
+            viewportCenterX,
+            viewportCenterY,
+            e.ClientX,
+            e.ClientY);
+
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public void OnRotateMove(double angle)
+    {
+        if (isRotating && rotatedElement != null)
+        {
+            // Calculate rotation delta
+            double angleDelta = angle - initialAngle;
+            double newRotation = initialRotation + angleDelta;
+
+            // Normalize to -180 to 180
+            while (newRotation > 180) newRotation -= 360;
+            while (newRotation < -180) newRotation += 360;
+
+            rotatedElement.Properties.Rotation = (int)Math.Round(newRotation);
+
+            StateHasChanged();
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnRotateEnd(double angle)
+    {
+        if (isRotating && rotatedElement != null)
+        {
+            // Calculate final rotation
+            double angleDelta = angle - initialAngle;
+            double newRotation = initialRotation + angleDelta;
+
+            // Normalize to -180 to 180
+            while (newRotation > 180) newRotation -= 360;
+            while (newRotation < -180) newRotation += 360;
+
+            rotatedElement.Properties.Rotation = (int)Math.Round(newRotation);
+
+            CurrentTemplate.MarkAsUpdated();
+
+            // Notify parent component
+            await OnElementDropped.InvokeAsync(rotatedElement);
+
+            // Reset rotation state
+            isRotating = false;
+            rotatedElement = null;
 
             StateHasChanged();
         }
@@ -785,6 +895,52 @@ public partial class Canvas : IAsyncDisposable
     public double GetZoomLevel() => zoomLevel;
 
     public int GetZoomPercentage() => (int)(zoomLevel * 100);
+
+    // ARIA accessibility helpers
+    private string GetElementAriaRole(FormElement element)
+    {
+        return element switch
+        {
+            TextInputElement => "textbox",
+            LabelElement => "heading",
+            CheckboxElement => "checkbox",
+            TextAreaElement => "textbox",
+            DropdownElement => "combobox",
+            RadioGroupElement => "radiogroup",
+            DatePickerElement => "textbox",
+            FileUploadElement => "group",
+            SignatureElement => "group",
+            ImageElement => "img",
+            DividerElement => "separator",
+            TableElement => "table",
+            _ => "group"
+        };
+    }
+
+    private string GetElementAriaLabel(FormElement element)
+    {
+        var baseLabel = element switch
+        {
+            TextInputElement textInput => !string.IsNullOrEmpty(textInput.Label) ? textInput.Label : !string.IsNullOrEmpty(textInput.Placeholder) ? $"Text input: {textInput.Placeholder}" : "Text input",
+            LabelElement label => $"Heading: {label.Text}",
+            CheckboxElement checkbox => !string.IsNullOrEmpty(checkbox.Label) ? checkbox.Label : "Checkbox",
+            TextAreaElement textArea => !string.IsNullOrEmpty(textArea.Label) ? textArea.Label : !string.IsNullOrEmpty(textArea.Placeholder) ? $"Text area: {textArea.Placeholder}" : "Text area",
+            DropdownElement dropdown => !string.IsNullOrEmpty(dropdown.Label) ? dropdown.Label : "Dropdown",
+            RadioGroupElement radioGroup => !string.IsNullOrEmpty(radioGroup.Label) ? radioGroup.Label : "Radio group",
+            DatePickerElement datePicker => !string.IsNullOrEmpty(datePicker.Label) ? datePicker.Label : "Date picker",
+            FileUploadElement fileUpload => !string.IsNullOrEmpty(fileUpload.Label) ? fileUpload.Label : "File upload",
+            SignatureElement signature => !string.IsNullOrEmpty(signature.Label) ? signature.Label : "Signature pad",
+            ImageElement image => !string.IsNullOrEmpty(image.AltText) ? image.AltText : "Image",
+            DividerElement => "Divider",
+            TableElement table => !string.IsNullOrEmpty(table.Label) ? table.Label : "Table",
+            _ => $"Form element: {element.Type}"
+        };
+
+        var positionInfo = $" at position {element.X}, {element.Y}";
+        var requiredInfo = element.IsRequired ? " (required)" : "";
+
+        return $"{baseLabel}{requiredInfo}{positionInfo}";
+    }
 
     // Smart spacing guides - show equal spacing between elements
     private void CalculateSmartGuides(int x, int y, FormElement movingElement)

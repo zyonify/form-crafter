@@ -6,13 +6,19 @@
 
 <PageTitle>Form Maker - Editor</PageTitle>
 
-<!-- Global Navigation -->
-<SharedAppBar />
+@if (isPreviewMode)
+{
+    <PreviewMode CurrentTemplate="currentTemplate" OnClose="ClosePreview" />
+}
+else
+{
+    <!-- Global Navigation -->
+    <SharedAppBar />
 
-<!-- Spacer for fixed navigation -->
-<div style="height: 64px;"></div>
+    <!-- Spacer for fixed navigation -->
+    <div style="height: 64px;"></div>
 
-<!-- Editor Toolbar - Fixed below main nav -->
+    <!-- Editor Toolbar - Fixed below main nav -->
 <div style="position: fixed; top: 64px; left: 0; right: 0; z-index: 1200; background-color: #fafafa; border-bottom: 2px solid #e0e0e0; padding: 12px 24px; display: flex; align-items: center; gap: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
     <!-- Form Name -->
     <MudTextField @bind-Value="currentTemplate.Name"
@@ -81,6 +87,14 @@
                Size="Size.Large">
         Preview
     </MudButton>
+
+    <!-- Keyboard Shortcuts Help Button -->
+    <MudIconButton Icon="@Icons.Material.Filled.Keyboard"
+                   Color="Color.Default"
+                   OnClick="ShowKeyboardShortcuts"
+                   Title="Keyboard Shortcuts (Ctrl+/ or F1)"
+                   aria-label="Show keyboard shortcuts help"
+                   Size="Size.Large" />
 </div>
 
 <!-- Spacer for editor toolbar (64px nav + ~60px toolbar) -->
@@ -203,6 +217,38 @@
 
                         <MudCheckBox @bind-Value="checkbox.DefaultChecked"
                                      Label="Checked by Default"
+                                     Color="Color.Primary" />
+                    }
+                    else if (selectedElement is ImageElement image)
+                    {
+                        <MudTextField @bind-Value="image.ImageUrl"
+                                      Label="Image URL"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Style="margin-bottom: 12px;"
+                                      HelperText="Enter the URL of an image" />
+
+                        <MudTextField @bind-Value="image.AltText"
+                                      Label="Alt Text (Accessibility)"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Style="margin-bottom: 12px;"
+                                      HelperText="Describe the image for screen readers" />
+
+                        <MudSelect @bind-Value="image.ObjectFit"
+                                   Label="Object Fit"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense"
+                                   Style="margin-bottom: 12px;">
+                            <MudSelectItem Value="@("contain")">Contain</MudSelectItem>
+                            <MudSelectItem Value="@("cover")">Cover</MudSelectItem>
+                            <MudSelectItem Value="@("fill")">Fill</MudSelectItem>
+                            <MudSelectItem Value="@("none")">None</MudSelectItem>
+                            <MudSelectItem Value="@("scale-down")">Scale Down</MudSelectItem>
+                        </MudSelect>
+
+                        <MudCheckBox @bind-Value="image.MaintainAspectRatio"
+                                     Label="Maintain Aspect Ratio"
                                      Color="Color.Primary" />
                     }
                     else if (selectedElement is TextAreaElement textArea)
@@ -543,7 +589,7 @@
                         Styling
                     </MudText>
 
-                    <MudExpansionPanels MultiExpansion="true">
+                    <MudExpansionPanels MultiExpansion="true" Elevation="0" DisableBorders="true">
                         <!-- Text Styling -->
                         <MudExpansionPanel Text="Text" IsInitiallyExpanded="true">
                             <MudNumericField @bind-Value="selectedElement.Properties.FontSize"
@@ -782,6 +828,7 @@
 
 <!-- Snackbar for notifications -->
 <MudSnackbarProvider />
+}
 
 @implements IAsyncDisposable
 
@@ -799,10 +846,11 @@
     private bool hasUnsavedChanges = false;
     private DateTime? lastSaveTime;
     private DotNetObjectReference<Editor>? dotNetHelper;
-    private FormElement? clipboardElement; // For copy/paste
+    private List<FormElement> clipboardElements = new(); // For copy/paste (supports multi-select)
     private string optionsText = ""; // For dropdown options editing
     private string radioOptionsText = ""; // For radio group options editing
     private string fileExtensionsText = ""; // For file upload extensions editing
+    private bool isPreviewMode = false; // Preview mode flag
 
     [Inject]
     private ISnackbar Snackbar { get; set; } = default!;
@@ -818,6 +866,9 @@
 
     [Inject]
     private IJSRuntime JSRuntime { get; set; } = default!;
+
+    [Inject]
+    private IDialogService DialogService { get; set; } = default!;
 
     [Parameter]
     [SupplyParameterFromQuery(Name = "id")]
@@ -895,9 +946,16 @@
         if (previousTemplate != null)
         {
             currentTemplate = previousTemplate;
+            currentTemplate.ClearSelection(); // Clear selection in template
             selectedElement = null;
             hasUnsavedChanges = true;
             StateHasChanged();
+
+            // Force canvas to refresh
+            if (canvasRef != null)
+            {
+                InvokeAsync(StateHasChanged);
+            }
         }
     }
 
@@ -907,9 +965,16 @@
         if (nextTemplate != null)
         {
             currentTemplate = nextTemplate;
+            currentTemplate.ClearSelection(); // Clear selection in template
             selectedElement = null;
             hasUnsavedChanges = true;
             StateHasChanged();
+
+            // Force canvas to refresh
+            if (canvasRef != null)
+            {
+                InvokeAsync(StateHasChanged);
+            }
         }
     }
 
@@ -1107,8 +1172,13 @@
 
     private void PreviewForm()
     {
-        // TODO: Implement preview mode
-        Snackbar.Add("Preview mode coming soon!", Severity.Info);
+        isPreviewMode = true;
+    }
+
+    private void ClosePreview()
+    {
+        isPreviewMode = false;
+        StateHasChanged();
     }
 
     // Zoom handler methods
@@ -1184,7 +1254,10 @@
 
     private void DuplicateSelectedElement()
     {
-        if (selectedElement == null)
+        // Get all selected elements
+        var selectedElements = currentTemplate.Elements.Where(e => e.IsSelected).ToList();
+
+        if (!selectedElements.Any())
         {
             Snackbar.Add("No element selected to duplicate", Severity.Warning);
             return;
@@ -1192,39 +1265,61 @@
 
         RecordHistory(); // Record state before duplication
 
-        // Serialize and deserialize for deep copy
-        var json = System.Text.Json.JsonSerializer.Serialize(selectedElement);
-        var duplicatedElement = System.Text.Json.JsonSerializer.Deserialize<FormElement>(json);
+        // Clear current selection
+        currentTemplate.ClearSelection();
 
-        if (duplicatedElement != null)
+        List<FormElement> newElements = new();
+
+        foreach (var element in selectedElements)
         {
-            // Generate new ID
-            duplicatedElement.Id = Guid.NewGuid();
+            // Serialize and deserialize for deep copy
+            var json = System.Text.Json.JsonSerializer.Serialize(element);
+            var duplicatedElement = System.Text.Json.JsonSerializer.Deserialize<FormElement>(json);
 
-            // Offset position so it's visible (20px down and right)
-            duplicatedElement.X += 20;
-            duplicatedElement.Y += 20;
-
-            // Ensure it stays within canvas bounds
-            if (duplicatedElement.X + duplicatedElement.Width > currentTemplate.WidthInPixels)
+            if (duplicatedElement != null)
             {
-                duplicatedElement.X = currentTemplate.WidthInPixels - duplicatedElement.Width - 10;
-            }
-            if (duplicatedElement.Y + duplicatedElement.Height > currentTemplate.HeightInPixels)
-            {
-                duplicatedElement.Y = currentTemplate.HeightInPixels - duplicatedElement.Height - 10;
-            }
+                // Generate new ID
+                duplicatedElement.Id = Guid.NewGuid();
 
-            // Deselect current, add new element, and select it
-            currentTemplate.ClearSelection();
-            currentTemplate.AddElement(duplicatedElement);
-            duplicatedElement.IsSelected = true;
-            selectedElement = duplicatedElement;
+                // Offset position so it's visible (20px down and right)
+                duplicatedElement.X += 20;
+                duplicatedElement.Y += 20;
 
-            hasUnsavedChanges = true;
-            Snackbar.Add($"{duplicatedElement.GetDisplayName()} duplicated", Severity.Success);
-            StateHasChanged();
+                // Ensure it stays within canvas bounds
+                if (duplicatedElement.X + duplicatedElement.Width > currentTemplate.WidthInPixels)
+                {
+                    duplicatedElement.X = currentTemplate.WidthInPixels - duplicatedElement.Width - 10;
+                }
+                if (duplicatedElement.Y + duplicatedElement.Height > currentTemplate.HeightInPixels)
+                {
+                    duplicatedElement.Y = currentTemplate.HeightInPixels - duplicatedElement.Height - 10;
+                }
+
+                // Add new element and select it
+                currentTemplate.AddElement(duplicatedElement);
+                duplicatedElement.IsSelected = true;
+                newElements.Add(duplicatedElement);
+            }
         }
+
+        // Update selected element (last duplicated for properties panel)
+        if (newElements.Any())
+        {
+            selectedElement = newElements.Last();
+        }
+
+        hasUnsavedChanges = true;
+
+        if (newElements.Count == 1)
+        {
+            Snackbar.Add($"{newElements[0].GetDisplayName()} duplicated", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add($"{newElements.Count} elements duplicated", Severity.Success);
+        }
+
+        StateHasChanged();
     }
 
     [JSInvokable]
@@ -1247,22 +1342,42 @@
 
     private void CopySelectedElement()
     {
-        if (selectedElement == null)
+        // Get all selected elements
+        var selectedElements = currentTemplate.Elements.Where(e => e.IsSelected).ToList();
+
+        if (!selectedElements.Any())
         {
             Snackbar.Add("No element selected to copy", Severity.Warning);
             return;
         }
 
-        // Serialize for deep copy to clipboard
-        var json = System.Text.Json.JsonSerializer.Serialize(selectedElement);
-        clipboardElement = System.Text.Json.JsonSerializer.Deserialize<FormElement>(json);
+        // Clear clipboard and copy all selected elements
+        clipboardElements.Clear();
 
-        Snackbar.Add($"{selectedElement.GetDisplayName()} copied to clipboard", Severity.Info);
+        foreach (var element in selectedElements)
+        {
+            // Serialize for deep copy to clipboard
+            var json = System.Text.Json.JsonSerializer.Serialize(element);
+            var copiedElement = System.Text.Json.JsonSerializer.Deserialize<FormElement>(json);
+            if (copiedElement != null)
+            {
+                clipboardElements.Add(copiedElement);
+            }
+        }
+
+        if (selectedElements.Count == 1)
+        {
+            Snackbar.Add($"{selectedElements[0].GetDisplayName()} copied to clipboard", Severity.Info);
+        }
+        else
+        {
+            Snackbar.Add($"{selectedElements.Count} elements copied to clipboard", Severity.Info);
+        }
     }
 
     private void PasteElement()
     {
-        if (clipboardElement == null)
+        if (!clipboardElements.Any())
         {
             Snackbar.Add("Nothing to paste", Severity.Warning);
             return;
@@ -1270,42 +1385,108 @@
 
         RecordHistory(); // Record state before paste
 
-        // Serialize and deserialize for deep copy
-        var json = System.Text.Json.JsonSerializer.Serialize(clipboardElement);
-        var pastedElement = System.Text.Json.JsonSerializer.Deserialize<FormElement>(json);
+        // Clear current selection
+        currentTemplate.ClearSelection();
 
-        if (pastedElement != null)
+        List<FormElement> newElements = new();
+
+        foreach (var clipboardElement in clipboardElements)
         {
-            // Generate new ID
-            pastedElement.Id = Guid.NewGuid();
+            // Serialize and deserialize for deep copy
+            var json = System.Text.Json.JsonSerializer.Serialize(clipboardElement);
+            var pastedElement = System.Text.Json.JsonSerializer.Deserialize<FormElement>(json);
 
-            // Offset position so it's visible (20px down and right from the copied element)
-            pastedElement.X += 20;
-            pastedElement.Y += 20;
-
-            // Ensure it stays within canvas bounds
-            if (pastedElement.X + pastedElement.Width > currentTemplate.WidthInPixels)
+            if (pastedElement != null)
             {
-                pastedElement.X = currentTemplate.WidthInPixels - pastedElement.Width - 10;
+                // Generate new ID
+                pastedElement.Id = Guid.NewGuid();
+
+                // Offset position so it's visible (20px down and right from the copied element)
+                pastedElement.X += 20;
+                pastedElement.Y += 20;
+
+                // Ensure it stays within canvas bounds
+                if (pastedElement.X + pastedElement.Width > currentTemplate.WidthInPixels)
+                {
+                    pastedElement.X = currentTemplate.WidthInPixels - pastedElement.Width - 10;
+                }
+                if (pastedElement.Y + pastedElement.Height > currentTemplate.HeightInPixels)
+                {
+                    pastedElement.Y = currentTemplate.HeightInPixels - pastedElement.Height - 10;
+                }
+
+                // Add new element and select it
+                currentTemplate.AddElement(pastedElement);
+                pastedElement.IsSelected = true;
+                newElements.Add(pastedElement);
             }
-            if (pastedElement.Y + pastedElement.Height > currentTemplate.HeightInPixels)
-            {
-                pastedElement.Y = currentTemplate.HeightInPixels - pastedElement.Height - 10;
-            }
-
-            // Deselect current, add new element, and select it
-            currentTemplate.ClearSelection();
-            currentTemplate.AddElement(pastedElement);
-            pastedElement.IsSelected = true;
-            selectedElement = pastedElement;
-
-            // Update clipboard to the new pasted element for repeated pastes
-            var newClipboardJson = System.Text.Json.JsonSerializer.Serialize(pastedElement);
-            clipboardElement = System.Text.Json.JsonSerializer.Deserialize<FormElement>(newClipboardJson);
-
-            hasUnsavedChanges = true;
-            Snackbar.Add($"{pastedElement.GetDisplayName()} pasted", Severity.Success);
-            StateHasChanged();
         }
+
+        // Update selected element (last pasted for properties panel)
+        if (newElements.Any())
+        {
+            selectedElement = newElements.Last();
+        }
+
+        // Update clipboard to the new pasted elements for repeated pastes
+        clipboardElements.Clear();
+        foreach (var newElement in newElements)
+        {
+            var json = System.Text.Json.JsonSerializer.Serialize(newElement);
+            var copiedElement = System.Text.Json.JsonSerializer.Deserialize<FormElement>(json);
+            if (copiedElement != null)
+            {
+                clipboardElements.Add(copiedElement);
+            }
+        }
+
+        hasUnsavedChanges = true;
+
+        if (newElements.Count == 1)
+        {
+            Snackbar.Add($"{newElements[0].GetDisplayName()} pasted", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add($"{newElements.Count} elements pasted", Severity.Success);
+        }
+
+        StateHasChanged();
+    }
+
+    // Show keyboard shortcuts help dialog
+    private async Task ShowKeyboardShortcuts()
+    {
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            CloseButton = true,
+            CloseOnEscapeKey = true
+        };
+
+        await DialogService.ShowAsync<KeyboardShortcutsDialog>("Keyboard Shortcuts", options);
+    }
+
+    [JSInvokable]
+    public async Task OnShowKeyboardShortcuts()
+    {
+        await ShowKeyboardShortcuts();
+    }
+
+    [JSInvokable]
+    public void OnSelectAll()
+    {
+        // Select all elements on canvas
+        foreach (var element in currentTemplate.Elements)
+        {
+            element.IsSelected = true;
+        }
+
+        // Set selected element to the last one for properties panel
+        selectedElement = currentTemplate.Elements.LastOrDefault();
+
+        Snackbar.Add($"{currentTemplate.Elements.Count} elements selected", Severity.Info);
+        StateHasChanged();
     }
 }

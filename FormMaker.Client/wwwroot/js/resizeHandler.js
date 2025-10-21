@@ -21,12 +21,21 @@ window.resizeHandler = {
         document.addEventListener('mouseup', this.handleGlobalMouseUp.bind(this));
     },
 
-    startResize: function (elementId, handleType, startX, startY, width, height, left, top) {
+    startResize: function (elementId, handleType, clientX, clientY, width, height, left, top) {
         this.isResizing = true;
         this.activeElement = elementId;
         this.activeHandle = handleType;
-        this.startX = startX;
-        this.startY = startY;
+
+        // Convert client coordinates to canvas-relative coordinates
+        if (this.canvasElement) {
+            const canvasRect = this.canvasElement.getBoundingClientRect();
+            this.startX = clientX - canvasRect.left;
+            this.startY = clientY - canvasRect.top;
+        } else {
+            this.startX = clientX;
+            this.startY = clientY;
+        }
+
         this.startWidth = width;
         this.startHeight = height;
         this.startLeft = left;

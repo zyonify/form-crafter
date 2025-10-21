@@ -5,6 +5,9 @@
 <div class="canvas-container">
     <div class="canvas @GetPageSizeClass()"
          data-canvas-id="main-canvas"
+         role="region"
+         aria-label="Form builder canvas"
+         tabindex="0"
          style="width: @(CurrentTemplate.WidthInPixels)px; height: @(CurrentTemplate.HeightInPixels)px; background-color: @CurrentTemplate.BackgroundColor; position: relative; transform: scale(@zoomLevel); transform-origin: top left;"
          @onclick="HandleCanvasClick">
 
@@ -24,6 +27,11 @@
         {
             <div class="canvas-element @(element.IsSelected ? "element-selected" : "") @(isDragging && draggedElement == element ? "element-dragging" : "")"
                  data-element-id="@element.Id"
+                 role="@GetElementAriaRole(element)"
+                 aria-label="@GetElementAriaLabel(element)"
+                 aria-selected="@element.IsSelected"
+                 aria-grabbed="@(isDragging && draggedElement == element)"
+                 tabindex="0"
                  style="position: absolute;
                         left: @(isDragging && draggedElement == element ? dragX : isResizing && resizedElement == element ? resizeX : element.X)px;
                         top: @(isDragging && draggedElement == element ? dragY : isResizing && resizedElement == element ? resizeY : element.Y)px;
@@ -45,16 +53,44 @@
                 @if (element.IsSelected && !isDragging)
                 {
                     <!-- Corner handles -->
-                    <div class="resize-handle resize-nw" @onmousedown="@(e => HandleResizeStart(e, element, "nw"))" @onmousedown:stopPropagation="true"></div>
-                    <div class="resize-handle resize-ne" @onmousedown="@(e => HandleResizeStart(e, element, "ne"))" @onmousedown:stopPropagation="true"></div>
-                    <div class="resize-handle resize-sw" @onmousedown="@(e => HandleResizeStart(e, element, "sw"))" @onmousedown:stopPropagation="true"></div>
-                    <div class="resize-handle resize-se" @onmousedown="@(e => HandleResizeStart(e, element, "se"))" @onmousedown:stopPropagation="true"></div>
+                    <div class="resize-handle resize-nw" role="button" aria-label="Resize top-left corner" tabindex="-1" @onmousedown="@(e => HandleResizeStart(e, element, "nw"))" @onmousedown:stopPropagation="true"></div>
+                    <div class="resize-handle resize-ne" role="button" aria-label="Resize top-right corner" tabindex="-1" @onmousedown="@(e => HandleResizeStart(e, element, "ne"))" @onmousedown:stopPropagation="true"></div>
+                    <div class="resize-handle resize-sw" role="button" aria-label="Resize bottom-left corner" tabindex="-1" @onmousedown="@(e => HandleResizeStart(e, element, "sw"))" @onmousedown:stopPropagation="true"></div>
+                    <div class="resize-handle resize-se" role="button" aria-label="Resize bottom-right corner" tabindex="-1" @onmousedown="@(e => HandleResizeStart(e, element, "se"))" @onmousedown:stopPropagation="true"></div>
 
                     <!-- Edge handles -->
-                    <div class="resize-handle resize-n" @onmousedown="@(e => HandleResizeStart(e, element, "n"))" @onmousedown:stopPropagation="true"></div>
-                    <div class="resize-handle resize-s" @onmousedown="@(e => HandleResizeStart(e, element, "s"))" @onmousedown:stopPropagation="true"></div>
-                    <div class="resize-handle resize-w" @onmousedown="@(e => HandleResizeStart(e, element, "w"))" @onmousedown:stopPropagation="true"></div>
-                    <div class="resize-handle resize-e" @onmousedown="@(e => HandleResizeStart(e, element, "e"))" @onmousedown:stopPropagation="true"></div>
+                    <div class="resize-handle resize-n" role="button" aria-label="Resize top edge" tabindex="-1" @onmousedown="@(e => HandleResizeStart(e, element, "n"))" @onmousedown:stopPropagation="true"></div>
+                    <div class="resize-handle resize-s" role="button" aria-label="Resize bottom edge" tabindex="-1" @onmousedown="@(e => HandleResizeStart(e, element, "s"))" @onmousedown:stopPropagation="true"></div>
+                    <div class="resize-handle resize-w" role="button" aria-label="Resize left edge" tabindex="-1" @onmousedown="@(e => HandleResizeStart(e, element, "w"))" @onmousedown:stopPropagation="true"></div>
+                    <div class="resize-handle resize-e" role="button" aria-label="Resize right edge" tabindex="-1" @onmousedown="@(e => HandleResizeStart(e, element, "e"))" @onmousedown:stopPropagation="true"></div>
+
+                    <!-- Rotation handle -->
+                    <div class="rotation-handle"
+                         role="button"
+                         aria-label="Rotate element"
+                         tabindex="-1"
+                         style="position: absolute;
+                                top: -30px;
+                                left: 50%;
+                                transform: translateX(-50%);
+                                width: 20px;
+                                height: 20px;
+                                background-color: #1976d2;
+                                border: 2px solid white;
+                                border-radius: 50%;
+                                cursor: grab;
+                                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                                z-index: 1001;"
+                         @onmousedown="@(e => HandleRotateStart(e, element))"
+                         @onmousedown:stopPropagation="true">
+                        <div style="position: absolute;
+                                    bottom: 20px;
+                                    left: 50%;
+                                    transform: translateX(-50%);
+                                    width: 2px;
+                                    height: 10px;
+                                    background-color: #1976d2;"></div>
+                    </div>
                 }
             </div>
         }
@@ -64,11 +100,11 @@
         {
             @if (verticalGuidePosition.HasValue)
             {
-                <div class="alignment-guide vertical" style="left: @(verticalGuidePosition.Value)px;"></div>
+                <div class="alignment-guide vertical" role="presentation" aria-hidden="true" style="left: @(verticalGuidePosition.Value)px;"></div>
             }
             @if (horizontalGuidePosition.HasValue)
             {
-                <div class="alignment-guide horizontal" style="top: @(horizontalGuidePosition.Value)px;"></div>
+                <div class="alignment-guide horizontal" role="presentation" aria-hidden="true" style="top: @(horizontalGuidePosition.Value)px;"></div>
             }
         }
 
@@ -77,11 +113,11 @@
         {
             @if (guide.IsVertical)
             {
-                <div class="spacing-guide vertical" style="left: @(guide.Position)px;"></div>
+                <div class="spacing-guide vertical" role="presentation" aria-hidden="true" style="left: @(guide.Position)px;"></div>
             }
             else
             {
-                <div class="spacing-guide horizontal" style="top: @(guide.Position)px;"></div>
+                <div class="spacing-guide horizontal" role="presentation" aria-hidden="true" style="top: @(guide.Position)px;"></div>
             }
         }
     </div>
@@ -107,6 +143,12 @@
     private int resizeHeight = 0;
     private int resizeX = 0;
     private int resizeY = 0;
+
+    // Rotation state
+    private FormElement? rotatedElement;
+    private bool isRotating = false;
+    private double initialRotation = 0;
+    private double initialAngle = 0;
 
     // Smart spacing guides
     private List<(int Position, bool IsVertical)> spacingGuides = new();
