@@ -24,6 +24,19 @@ public partial class Canvas : IAsyncDisposable
     [Inject]
     private FormMaker.Client.Services.AccessibilityService AccessibilityService { get; set; } = default!;
 
+    // Helper method to get current page elements for multi-page support
+    private List<FormElement> GetCurrentPageElements()
+    {
+        // If multi-page mode is enabled and we have pages, use current page
+        if (CurrentTemplate.IsMultiPage && CurrentTemplate.CurrentPage != null)
+        {
+            return CurrentTemplate.CurrentPage.Elements;
+        }
+
+        // Fallback to legacy Elements list for backward compatibility
+        return CurrentTemplate.Elements;
+    }
+
     private DotNetObjectReference<Canvas>? dotNetHelper;
     private DotNetObjectReference<Canvas>? resizeDotNetHelper;
     private DotNetObjectReference<Canvas>? multiSelectDotNetHelper;
@@ -85,7 +98,14 @@ public partial class Canvas : IAsyncDisposable
     private void HandleCanvasClick(MouseEventArgs e)
     {
         // Deselect all elements when clicking on empty canvas
-        CurrentTemplate.ClearSelection();
+        if (CurrentTemplate.IsMultiPage && CurrentTemplate.CurrentPage != null)
+        {
+            CurrentTemplate.CurrentPage.ClearSelection();
+        }
+        else
+        {
+            CurrentTemplate.ClearSelection();
+        }
         StateHasChanged();
     }
 
@@ -94,7 +114,14 @@ public partial class Canvas : IAsyncDisposable
         // Check if Ctrl key is pressed for multi-selection
         // Note: JavaScript interop will be needed to detect Ctrl key
         // For now, implement basic single selection
-        CurrentTemplate.ClearSelection();
+        if (CurrentTemplate.IsMultiPage && CurrentTemplate.CurrentPage != null)
+        {
+            CurrentTemplate.CurrentPage.ClearSelection();
+        }
+        else
+        {
+            CurrentTemplate.ClearSelection();
+        }
         element.IsSelected = true;
 
         // Announce element selection to screen readers
@@ -107,7 +134,9 @@ public partial class Canvas : IAsyncDisposable
     [JSInvokable]
     public async Task OnElementClickWithModifiers(string elementId, bool ctrlKey, bool shiftKey)
     {
-        var element = CurrentTemplate.Elements.FirstOrDefault(e => e.Id.ToString() == elementId);
+        // Search in current page elements (multi-page support)
+        var currentElements = GetCurrentPageElements();
+        var element = currentElements.FirstOrDefault(e => e.Id.ToString() == elementId);
         if (element == null) return;
 
         if (ctrlKey)
@@ -117,8 +146,15 @@ public partial class Canvas : IAsyncDisposable
         }
         else
         {
-            // Single select: Clear other selections
-            CurrentTemplate.ClearSelection();
+            // Single select: Clear other selections on current page only
+            if (CurrentTemplate.IsMultiPage && CurrentTemplate.CurrentPage != null)
+            {
+                CurrentTemplate.CurrentPage.ClearSelection();
+            }
+            else
+            {
+                CurrentTemplate.ClearSelection();
+            }
             element.IsSelected = true;
         }
 

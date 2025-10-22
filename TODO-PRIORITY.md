@@ -47,18 +47,48 @@
 - [ ] Add validation error display in preview mode (deferred to Phase 2.5)
 
 #### 4. Accessibility Improvements (WCAG 2.1 AA)
-**Status:** ✅ COMPLETED (Phase 1)
-**Effort:** 8-10 hours (Actual: 6 hours)
+**Status:** ✅ COMPLETED (Phase 1 & 2)
+**Effort:** 8-10 hours (Actual: 8 hours)
 **Impact:** High - legal compliance & inclusive design
 
+**Phase 1 (Completed):**
 - [x] Add ARIA labels to all canvas elements
 - [x] Add screen reader announcements for drag/drop actions
 - [x] Implement proper tab order management
 - [x] Add focus management for dialogs/modals
 - [x] Add alt text field to ImageElement
 - [x] Add keyboard shortcuts help dialog
-- [ ] Run accessibility audit tools (axe, WAVE) - Phase 2
-- [ ] Fix any remaining WCAG AA violations - Phase 2
+
+**Phase 2 (Completed 2025-10-21):**
+- [x] Set up axe-core accessibility testing infrastructure
+- [x] Create AccessibilityAudit.razor page for automated testing
+- [x] Implement WCAG 2.1 AA compliance scanning
+- [x] Fix keyboard accessibility issues:
+  - [x] ElementLibrary buttons now keyboard accessible (Enter/Space)
+  - [x] SharedAppBar logo converted to proper button
+  - [x] All interactive elements have role="button" and tabindex="0"
+- [x] Add semantic HTML landmarks:
+  - [x] <main> landmark on Forms and Editor pages
+  - [x] <nav> landmark for navigation bars
+  - [x] <aside> landmarks for sidebars
+  - [x] role="toolbar" for Editor toolbar
+- [x] Improve ARIA labels:
+  - [x] Navigation regions properly labeled
+  - [x] Form elements library labeled
+  - [x] Properties panel labeled
+  - [x] Decorative icons marked with aria-hidden="true"
+
+**Phase 3 (Completed 2025-10-22):**
+- [x] Created floating AccessibilityAuditWidget for testing all pages
+- [x] Run full accessibility audit on all pages
+- [x] Fixed all CRITICAL violations (2 total):
+  - [x] Forms page: Added aria-label to Delete button (Forms.razor:115-116)
+  - [x] Editor page: Fixed aria-required-children by converting Add Page div to button (PageTabs.razor:31-37)
+- [x] Fixed modal dialog issues:
+  - [x] ConfirmDialog.razor: Fixed cascading parameter to use IMudDialogInstance
+  - [x] Forms.razor & Editor.razor: Fixed dialog result checking with proper pattern matching
+- [ ] DEFERRED: Fix 16 SERIOUS color-contrast violations (Forms: 6, Editor: 6, Preview: 4)
+  - Note: Color contrast issues deferred as they require design review and are not blocking
 
 ---
 
@@ -191,11 +221,14 @@
 4. ✅ Accessibility improvements - Phase 1 (ARIA, screen readers, keyboard shortcuts)
 5. ✅ Preview mode implementation (Phase 2.5)
 6. ✅ Element rotation (Phase 2.4)
+7. ✅ Accessibility audit infrastructure (axe-core integration)
+8. ✅ WCAG 2.1 AA compliance improvements - Phase 2
 
 **Next Sprint:**
-1. Large component refactoring (Phase 2) - Optional
-2. Accessibility audit & WCAG compliance testing
-3. Multi-page form support or Performance optimization
+1. Run full accessibility audits on all pages
+2. Fix critical/serious WCAG violations
+3. Large component refactoring (Phase 2) - Optional
+4. Multi-page form support or Performance optimization
 
 ---
 
@@ -320,5 +353,5 @@ All bugs fixed in a single session on **2025-10-20**.
 
 ---
 
-*Last Updated: 2025-10-20*
+*Last Updated: 2025-10-21*
 *Priority: 🔴 Critical | 🟡 High | 🟢 Medium | ⚪ Low/Deferred*

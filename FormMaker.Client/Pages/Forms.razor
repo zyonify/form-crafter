@@ -11,6 +11,7 @@
 <!-- Spacer for fixed header -->
 <div style="height: 64px;"></div>
 
+<main aria-label="My forms page">
 <MudContainer MaxWidth="MaxWidth.Large" Style="padding-top: 32px; padding-bottom: 32px;">
     <!-- Header -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
@@ -25,7 +26,8 @@
                    Color="Color.Primary"
                    StartIcon="@Icons.Material.Filled.Add"
                    Href="/editor"
-                   Size="Size.Large">
+                   Size="Size.Large"
+                   aria-label="Create new form">
             New Form
         </MudButton>
     </div>
@@ -34,7 +36,7 @@
     @if (isLoading)
     {
         <div style="text-align: center; padding: 64px 0;">
-            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" aria-label="Loading your forms" />
             <MudText Typo="Typo.body1" Style="margin-top: 16px;">Loading your forms...</MudText>
         </div>
     }
@@ -42,16 +44,17 @@
     {
         <!-- Empty State -->
         <MudPaper Elevation="0" Style="text-align: center; padding: 64px 32px; background-color: #fafafa;">
-            <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Large" Style="font-size: 96px; color: #ccc; margin-bottom: 16px;" />
+            <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Large" Style="font-size: 96px; color: #757575; margin-bottom: 16px;" aria-hidden="true" />
             <MudText Typo="Typo.h5" Style="margin-bottom: 16px; color: #666;">No Forms Yet</MudText>
-            <MudText Typo="Typo.body1" Style="margin-bottom: 32px; color: #999;">
+            <MudText Typo="Typo.body1" Style="margin-bottom: 32px; color: #757575;">
                 Create your first form to get started!
             </MudText>
             <MudButton Variant="Variant.Filled"
                        Color="Color.Primary"
                        StartIcon="@Icons.Material.Filled.Add"
                        Href="/editor"
-                       Size="Size.Large">
+                       Size="Size.Large"
+                       aria-label="Create your first form">
                 Create Your First Form
             </MudButton>
         </MudPaper>
@@ -108,7 +111,9 @@
 
                             <MudIconButton Icon="@Icons.Material.Filled.Delete"
                                            Color="Color.Error"
-                                           OnClick="() => ShowDeleteDialog(form.Id, form.Name)" />
+                                           OnClick="@(async () => await DeleteForm(form.Id, form.Name))"
+                                           aria-label="@($"Delete {form.Name}")"
+                                           Title="@($"Delete {form.Name}")" />
                         </MudCardActions>
                     </MudCard>
                 </MudItem>
@@ -116,44 +121,12 @@
         </MudGrid>
     }
 </MudContainer>
+</main>
 
-<!-- Delete Confirmation Dialog -->
-@if (deleteDialogVisible)
-{
-    <MudDialog>
-        <TitleContent>
-            <MudText Typo="Typo.h6">Delete Form?</MudText>
-        </TitleContent>
-        <DialogContent>
-            <MudText>Are you sure you want to delete <strong>@formToDeleteName</strong>?</MudText>
-            <MudText Typo="Typo.body2" Color="Color.Error" Style="margin-top: 8px;">
-                This action cannot be undone.
-            </MudText>
-        </DialogContent>
-        <DialogActions>
-            <MudButton OnClick="CancelDelete">Cancel</MudButton>
-            <MudButton Color="Color.Error"
-                       Variant="Variant.Filled"
-                       OnClick="ConfirmDelete">
-                Delete
-            </MudButton>
-        </DialogActions>
-    </MudDialog>
-}
 
 @code {
     private List<FormMetadata>? forms;
     private bool isLoading = true;
-    private bool deleteDialogVisible = false;
-    private Guid? formToDeleteId;
-    private string? formToDeleteName;
-
-    private DialogOptions dialogOptions = new()
-    {
-        CloseButton = true,
-        MaxWidth = MaxWidth.Small,
-        FullWidth = true
-    };
 
     [Inject]
     private LocalStorageService LocalStorage { get; set; } = default!;
@@ -163,6 +136,9 @@
 
     [Inject]
     private ISnackbar Snackbar { get; set; } = default!;
+
+    [Inject]
+    private IDialogService DialogService { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
@@ -218,42 +194,46 @@
         }
     }
 
-    private void ShowDeleteDialog(Guid formId, string formName)
+    private async Task DeleteForm(Guid formId, string formName)
     {
-        formToDeleteId = formId;
-        formToDeleteName = formName;
-        deleteDialogVisible = true;
-    }
-
-    private void CancelDelete()
-    {
-        deleteDialogVisible = false;
-        formToDeleteId = null;
-        formToDeleteName = null;
-    }
-
-    private async Task ConfirmDelete()
-    {
-        if (formToDeleteId.HasValue)
+        var parameters = new DialogParameters
         {
-            try
-            {
-                await LocalStorage.DeleteFormAsync(formToDeleteId.Value);
-                Snackbar.Add($"'{formToDeleteName}' deleted", Severity.Info);
+            ["Content"] = $"Are you sure you want to delete '{formName}'? This action cannot be undone.",
+            ["ConfirmText"] = "Delete",
+            ["ConfirmColor"] = Color.Error
+        };
 
-                // Reload the forms list
-                await LoadForms();
-            }
-            catch (Exception ex)
-            {
-                Snackbar.Add($"Error deleting form: {ex.Message}", Severity.Error);
-            }
-            finally
-            {
-                deleteDialogVisible = false;
-                formToDeleteId = null;
-                formToDeleteName = null;
-            }
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            CloseButton = false,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Delete Form", parameters, options);
+        var result = await dialog.Result;
+
+        // Check if user canceled or didn't confirm
+        if (result == null || result.Canceled)
+        {
+            return;
+        }
+
+        // Verify the user actually confirmed (Data should be true)
+        if (result.Data is not bool confirmed || !confirmed)
+        {
+            return;
+        }
+
+        try
+        {
+            await LocalStorage.DeleteFormAsync(formId);
+            Snackbar.Add($"'{formName}' deleted", Severity.Info);
+            await LoadForms();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error deleting form: {ex.Message}", Severity.Error);
         }
     }
 

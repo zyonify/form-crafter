@@ -2,7 +2,7 @@
 @using FormMaker.Shared.Models.Elements
 @using FormMaker.Shared.Enums
 
-<div class="element-library">
+<nav class="element-library" aria-label="Form elements library">
     <MudText Typo="Typo.h6" Style="margin-bottom: 16px; font-weight: 600;">Form Elements</MudText>
     <MudText Typo="Typo.body2" Style="margin-bottom: 24px; color: #666;">
         Drag elements to the canvas to build your form
@@ -17,65 +17,97 @@
 
     <div class="element-library-item draggable"
          draggable="true"
+         role="button"
+         tabindex="0"
+         aria-label="Add label or heading element"
          @ondragstart="() => HandleDragStart(ElementType.Label)"
-         @onclick="() => AddElement(ElementType.Label)">
-        <MudIcon Icon="@Icons.Material.Filled.TextFields" Size="Size.Large" />
+         @onclick="() => AddElement(ElementType.Label)"
+         @onkeydown="@(e => HandleKeyDown(e, ElementType.Label))">
+        <MudIcon Icon="@Icons.Material.Filled.TextFields" Size="Size.Large" aria-hidden="true" />
         <span>Label / Heading</span>
     </div>
 
     <div class="element-library-item draggable"
          draggable="true"
+         role="button"
+         tabindex="0"
+         aria-label="Add text input element"
          @ondragstart="() => HandleDragStart(ElementType.TextInput)"
-         @onclick="() => AddElement(ElementType.TextInput)">
-        <MudIcon Icon="@Icons.Material.Filled.Input" Size="Size.Large" />
+         @onclick="() => AddElement(ElementType.TextInput)"
+         @onkeydown="@(e => HandleKeyDown(e, ElementType.TextInput))">
+        <MudIcon Icon="@Icons.Material.Filled.Input" Size="Size.Large" aria-hidden="true" />
         <span>Text Input</span>
     </div>
 
     <div class="element-library-item draggable"
          draggable="true"
+         role="button"
+         tabindex="0"
+         aria-label="Add checkbox element"
          @ondragstart="() => HandleDragStart(ElementType.Checkbox)"
-         @onclick="() => AddElement(ElementType.Checkbox)">
-        <MudIcon Icon="@Icons.Material.Filled.CheckBox" Size="Size.Large" />
+         @onclick="() => AddElement(ElementType.Checkbox)"
+         @onkeydown="@(e => HandleKeyDown(e, ElementType.Checkbox))">
+        <MudIcon Icon="@Icons.Material.Filled.CheckBox" Size="Size.Large" aria-hidden="true" />
         <span>Checkbox</span>
     </div>
 
     <div class="element-library-item draggable"
          draggable="true"
+         role="button"
+         tabindex="0"
+         aria-label="Add text area element"
          @ondragstart="() => HandleDragStart(ElementType.TextArea)"
-         @onclick="() => AddElement(ElementType.TextArea)">
-        <MudIcon Icon="@Icons.Material.Filled.Subject" Size="Size.Large" />
+         @onclick="() => AddElement(ElementType.TextArea)"
+         @onkeydown="@(e => HandleKeyDown(e, ElementType.TextArea))">
+        <MudIcon Icon="@Icons.Material.Filled.Subject" Size="Size.Large" aria-hidden="true" />
         <span>Text Area</span>
     </div>
 
     <div class="element-library-item draggable"
          draggable="true"
+         role="button"
+         tabindex="0"
+         aria-label="Add dropdown element"
          @ondragstart="() => HandleDragStart(ElementType.Dropdown)"
-         @onclick="() => AddElement(ElementType.Dropdown)">
-        <MudIcon Icon="@Icons.Material.Filled.ArrowDropDownCircle" Size="Size.Large" />
+         @onclick="() => AddElement(ElementType.Dropdown)"
+         @onkeydown="@(e => HandleKeyDown(e, ElementType.Dropdown))">
+        <MudIcon Icon="@Icons.Material.Filled.ArrowDropDownCircle" Size="Size.Large" aria-hidden="true" />
         <span>Dropdown</span>
     </div>
 
     <div class="element-library-item draggable"
          draggable="true"
+         role="button"
+         tabindex="0"
+         aria-label="Add date picker element"
          @ondragstart="() => HandleDragStart(ElementType.DatePicker)"
-         @onclick="() => AddElement(ElementType.DatePicker)">
-        <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Size="Size.Large" />
+         @onclick="() => AddElement(ElementType.DatePicker)"
+         @onkeydown="@(e => HandleKeyDown(e, ElementType.DatePicker))">
+        <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Size="Size.Large" aria-hidden="true" />
         <span>Date Picker</span>
     </div>
 
     <div class="element-library-item draggable"
          draggable="true"
+         role="button"
+         tabindex="0"
+         aria-label="Add radio group element"
          @ondragstart="() => HandleDragStart(ElementType.RadioGroup)"
-         @onclick="() => AddElement(ElementType.RadioGroup)">
-        <MudIcon Icon="@Icons.Material.Filled.RadioButtonChecked" Size="Size.Large" />
+         @onclick="() => AddElement(ElementType.RadioGroup)"
+         @onkeydown="@(e => HandleKeyDown(e, ElementType.RadioGroup))">
+        <MudIcon Icon="@Icons.Material.Filled.RadioButtonChecked" Size="Size.Large" aria-hidden="true" />
         <span>Radio Group</span>
     </div>
 
     <div class="element-library-item draggable"
          draggable="true"
+         role="button"
+         tabindex="0"
+         aria-label="Add file upload element"
          @ondragstart="() => HandleDragStart(ElementType.FileUpload)"
-         @onclick="() => AddElement(ElementType.FileUpload)">
-        <MudIcon Icon="@Icons.Material.Filled.UploadFile" Size="Size.Large" />
+         @onclick="() => AddElement(ElementType.FileUpload)"
+         @onkeydown="@(e => HandleKeyDown(e, ElementType.FileUpload))">
+        <MudIcon Icon="@Icons.Material.Filled.UploadFile" Size="Size.Large" aria-hidden="true" />
         <span>File Upload</span>
     </div>
 
@@ -88,17 +120,25 @@
 
     <div class="element-library-item draggable"
          draggable="true"
+         role="button"
+         tabindex="0"
+         aria-label="Add signature pad element"
          @ondragstart="() => HandleDragStart(ElementType.Signature)"
-         @onclick="() => AddElement(ElementType.Signature)">
-        <MudIcon Icon="@Icons.Material.Filled.Draw" Size="Size.Large" />
+         @onclick="() => AddElement(ElementType.Signature)"
+         @onkeydown="@(e => HandleKeyDown(e, ElementType.Signature))">
+        <MudIcon Icon="@Icons.Material.Filled.Draw" Size="Size.Large" aria-hidden="true" />
         <span>Signature Pad</span>
     </div>
 
     <div class="element-library-item draggable"
          draggable="true"
+         role="button"
+         tabindex="0"
+         aria-label="Add table or grid element"
          @ondragstart="() => HandleDragStart(ElementType.Table)"
-         @onclick="() => AddElement(ElementType.Table)">
-        <MudIcon Icon="@Icons.Material.Filled.TableChart" Size="Size.Large" />
+         @onclick="() => AddElement(ElementType.Table)"
+         @onkeydown="@(e => HandleKeyDown(e, ElementType.Table))">
+        <MudIcon Icon="@Icons.Material.Filled.TableChart" Size="Size.Large" aria-hidden="true" />
         <span>Table / Grid</span>
     </div>
 
@@ -111,9 +151,13 @@
 
     <div class="element-library-item draggable"
          draggable="true"
+         role="button"
+         tabindex="0"
+         aria-label="Add image or logo element"
          @ondragstart="() => HandleDragStart(ElementType.Image)"
-         @onclick="() => AddElement(ElementType.Image)">
-        <MudIcon Icon="@Icons.Material.Filled.Image" Size="Size.Large" />
+         @onclick="() => AddElement(ElementType.Image)"
+         @onkeydown="@(e => HandleKeyDown(e, ElementType.Image))">
+        <MudIcon Icon="@Icons.Material.Filled.Image" Size="Size.Large" aria-hidden="true" />
         <span>Image / Logo</span>
     </div>
 
@@ -126,9 +170,13 @@
 
     <div class="element-library-item draggable"
          draggable="true"
+         role="button"
+         tabindex="0"
+         aria-label="Add divider or line element"
          @ondragstart="() => HandleDragStart(ElementType.Divider)"
-         @onclick="() => AddElement(ElementType.Divider)">
-        <MudIcon Icon="@Icons.Material.Filled.HorizontalRule" Size="Size.Large" />
+         @onclick="() => AddElement(ElementType.Divider)"
+         @onkeydown="@(e => HandleKeyDown(e, ElementType.Divider))">
+        <MudIcon Icon="@Icons.Material.Filled.HorizontalRule" Size="Size.Large" aria-hidden="true" />
         <span>Divider / Line</span>
     </div>
 
@@ -140,7 +188,7 @@
             <strong>Tip:</strong> Click or drag elements to add them to your form. More elements coming soon!
         </MudText>
     </MudPaper>
-</div>
+</nav>
 
 @code {
     [Parameter]
@@ -162,6 +210,15 @@
         element.Y = 100;
 
         await OnElementAdded.InvokeAsync(element);
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e, ElementType type)
+    {
+        // Activate on Enter or Space key
+        if (e.Code == "Enter" || e.Code == "Space")
+        {
+            await AddElement(type);
+        }
     }
 
     private FormElement CreateElement(ElementType type)
