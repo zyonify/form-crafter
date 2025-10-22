@@ -24,9 +24,26 @@ public class FormTemplate
     public string? Description { get; set; }
 
     /// <summary>
-    /// All elements in the form
+    /// All elements in the form (Legacy - for backward compatibility)
+    /// Use Pages for multi-page forms
     /// </summary>
     public List<FormElement> Elements { get; set; } = new();
+
+    /// <summary>
+    /// Pages in the form (for multi-page support)
+    /// </summary>
+    public List<FormPage> Pages { get; set; } = new();
+
+    /// <summary>
+    /// Index of the currently active page in the editor (0-based)
+    /// </summary>
+    [JsonIgnore]
+    public int CurrentPageIndex { get; set; } = 0;
+
+    /// <summary>
+    /// Whether this form uses multi-page mode
+    /// </summary>
+    public bool IsMultiPage { get; set; } = false;
 
     /// <summary>
     /// Page size for the form
@@ -182,6 +199,196 @@ public class FormTemplate
     /// </summary>
     public void MarkAsUpdated()
     {
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    // ===== Multi-Page Support Methods =====
+
+    /// <summary>
+    /// Gets the currently active page
+    /// </summary>
+    [JsonIgnore]
+    public FormPage? CurrentPage
+    {
+        get
+        {
+            EnsureMultiPageInitialized();
+            if (Pages.Count == 0) return null;
+            if (CurrentPageIndex < 0 || CurrentPageIndex >= Pages.Count)
+                CurrentPageIndex = 0;
+            return Pages[CurrentPageIndex];
+        }
+    }
+
+    /// <summary>
+    /// Ensures the form is initialized for multi-page mode
+    /// Migrates legacy single-page forms if needed
+    /// </summary>
+    public void EnsureMultiPageInitialized()
+    {
+        // If already multi-page with pages, we're good
+        if (IsMultiPage && Pages.Count > 0)
+            return;
+
+        // If not multi-page but has elements, migrate to single page
+        if (!IsMultiPage && Elements.Count > 0)
+        {
+            var page = new FormPage
+            {
+                Name = "Page 1",
+                Order = 0,
+                Elements = new List<FormElement>(Elements)
+            };
+            Pages = new List<FormPage> { page };
+            IsMultiPage = true;
+            return;
+        }
+
+        // If multi-page but no pages, create default page
+        if (IsMultiPage && Pages.Count == 0)
+        {
+            AddPage();
+        }
+
+        // If not multi-page and no elements, create default page
+        if (!IsMultiPage && Elements.Count == 0)
+        {
+            IsMultiPage = true;
+            AddPage();
+        }
+    }
+
+    /// <summary>
+    /// Adds a new page to the form
+    /// </summary>
+    public FormPage AddPage(string? name = null)
+    {
+        var pageNumber = Pages.Count + 1;
+        var page = new FormPage
+        {
+            Name = name ?? $"Page {pageNumber}",
+            Order = Pages.Count
+        };
+        Pages.Add(page);
+        UpdatedAt = DateTime.UtcNow;
+        return page;
+    }
+
+    /// <summary>
+    /// Removes a page from the form
+    /// </summary>
+    public bool RemovePage(Guid pageId)
+    {
+        var page = Pages.FirstOrDefault(p => p.Id == pageId);
+        if (page != null && Pages.Count > 1) // Don't allow deleting the last page
+        {
+            Pages.Remove(page);
+            // Reorder remaining pages
+            for (int i = 0; i < Pages.Count; i++)
+            {
+                Pages[i].Order = i;
+            }
+            // Adjust current page index if needed
+            if (CurrentPageIndex >= Pages.Count)
+            {
+                CurrentPageIndex = Pages.Count - 1;
+            }
+            UpdatedAt = DateTime.UtcNow;
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Duplicates a page
+    /// </summary>
+    public FormPage? DuplicatePage(Guid pageId)
+    {
+        var page = Pages.FirstOrDefault(p => p.Id == pageId);
+        if (page != null)
+        {
+            var clone = page.Clone();
+            clone.Order = Pages.Count;
+            Pages.Add(clone);
+            UpdatedAt = DateTime.UtcNow;
+            return clone;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Gets a page by ID
+    /// </summary>
+    public FormPage? GetPage(Guid pageId)
+    {
+        return Pages.FirstOrDefault(p => p.Id == pageId);
+    }
+
+    /// <summary>
+    /// Switches to a specific page
+    /// </summary>
+    public void SwitchToPage(int pageIndex)
+    {
+        if (pageIndex >= 0 && pageIndex < Pages.Count)
+        {
+            CurrentPageIndex = pageIndex;
+        }
+    }
+
+    /// <summary>
+    /// Switches to a specific page by ID
+    /// </summary>
+    public void SwitchToPage(Guid pageId)
+    {
+        var index = Pages.FindIndex(p => p.Id == pageId);
+        if (index >= 0)
+        {
+            CurrentPageIndex = index;
+        }
+    }
+
+    /// <summary>
+    /// Moves to the next page
+    /// </summary>
+    public bool NextPage()
+    {
+        if (CurrentPageIndex < Pages.Count - 1)
+        {
+            CurrentPageIndex++;
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Moves to the previous page
+    /// </summary>
+    public bool PreviousPage()
+    {
+        if (CurrentPageIndex > 0)
+        {
+            CurrentPageIndex--;
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Reorders pages
+    /// </summary>
+    public void ReorderPages(List<Guid> pageIds)
+    {
+        var reorderedPages = new List<FormPage>();
+        for (int i = 0; i < pageIds.Count; i++)
+        {
+            var page = Pages.FirstOrDefault(p => p.Id == pageIds[i]);
+            if (page != null)
+            {
+                page.Order = i;
+                reorderedPages.Add(page);
+            }
+        }
+        Pages = reorderedPages;
         UpdatedAt = DateTime.UtcNow;
     }
 }

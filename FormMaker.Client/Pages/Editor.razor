@@ -18,106 +18,120 @@ else
     <!-- Spacer for fixed navigation -->
     <div style="height: 64px;"></div>
 
-    <!-- Editor Toolbar - Fixed below main nav -->
-<div style="position: fixed; top: 64px; left: 0; right: 0; z-index: 1200; background-color: #fafafa; border-bottom: 2px solid #e0e0e0; padding: 12px 24px; display: flex; align-items: center; gap: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-    <!-- Form Name -->
-    <MudTextField @bind-Value="currentTemplate.Name"
-                  Variant="Variant.Outlined"
-                  Margin="Margin.Dense"
-                  Style="max-width: 300px;"
-                  Label="Form Name"
-                  Immediate="true" />
+    <!-- Combined Toolbar & Page Tabs - Fixed below main nav -->
+<div style="position: fixed; top: 64px; left: 0; right: 0; z-index: 1200; background-color: #fafafa; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column;">
 
-    <!-- Undo/Redo Buttons -->
-    <MudIconButton Icon="@Icons.Material.Filled.Undo"
-                   Color="Color.Default"
-                   OnClick="Undo"
-                   Disabled="@(!historyService.CanUndo)"
-                   Title="Undo (Ctrl+Z)"
-                   Size="Size.Large" />
+    <!-- Top Row: Editor Toolbar -->
+    <div aria-label="Editor toolbar" style="display: flex; align-items: center; gap: 16px; padding: 12px 24px; border-bottom: 1px solid #e0e0e0;">
+        <!-- Form Name -->
+        <MudTextField @bind-Value="currentTemplate.Name"
+                      Variant="Variant.Outlined"
+                      Margin="Margin.Dense"
+                      Style="max-width: 300px;"
+                      Label="Form Name"
+                      Immediate="true"
+                      aria-label="Form name input" />
 
-    <MudIconButton Icon="@Icons.Material.Filled.Redo"
-                   Color="Color.Default"
-                   OnClick="Redo"
-                   Disabled="@(!historyService.CanRedo)"
-                   Title="Redo (Ctrl+Y)"
-                   Size="Size.Large" />
+        <!-- Undo/Redo Buttons -->
+        <MudIconButton Icon="@Icons.Material.Filled.Undo"
+                       Color="Color.Default"
+                       OnClick="Undo"
+                       Disabled="@(!historyService.CanUndo)"
+                       Title="Undo (Ctrl+Z)"
+                       Size="Size.Large" />
 
-    <!-- Divider -->
-    <div style="width: 2px; height: 32px; background-color: #e0e0e0; margin: 0 8px;"></div>
+        <MudIconButton Icon="@Icons.Material.Filled.Redo"
+                       Color="Color.Default"
+                       OnClick="Redo"
+                       Disabled="@(!historyService.CanRedo)"
+                       Title="Redo (Ctrl+Y)"
+                       Size="Size.Large" />
 
-    <!-- Zoom Controls -->
-    <MudIconButton Icon="@Icons.Material.Filled.ZoomOut"
-                   Color="Color.Default"
-                   OnClick="ZoomOut"
-                   Title="Zoom Out"
-                   Size="Size.Large" />
+        <!-- Divider -->
+        <div style="width: 2px; height: 32px; background-color: #e0e0e0; margin: 0 8px;"></div>
 
-    <MudText Style="min-width: 60px; text-align: center; font-weight: 600;">
-        @(canvasRef?.GetZoomPercentage() ?? 100)%
-    </MudText>
+        <!-- Zoom Controls -->
+        <MudIconButton Icon="@Icons.Material.Filled.ZoomOut"
+                       Color="Color.Default"
+                       OnClick="ZoomOut"
+                       Title="Zoom Out"
+                       Size="Size.Large" />
 
-    <MudIconButton Icon="@Icons.Material.Filled.ZoomIn"
-                   Color="Color.Default"
-                   OnClick="ZoomIn"
-                   Title="Zoom In"
-                   Size="Size.Large" />
+        <MudText Style="min-width: 60px; text-align: center; font-weight: 600;">
+            @(canvasRef?.GetZoomPercentage() ?? 100)%
+        </MudText>
 
-    <MudIconButton Icon="@Icons.Material.Filled.FitScreen"
-                   Color="Color.Default"
-                   OnClick="ResetZoom"
-                   Title="Reset Zoom (100%)"
-                   Size="Size.Large" />
+        <MudIconButton Icon="@Icons.Material.Filled.ZoomIn"
+                       Color="Color.Default"
+                       OnClick="ZoomIn"
+                       Title="Zoom In"
+                       Size="Size.Large" />
 
-    <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.FitScreen"
+                       Color="Color.Default"
+                       OnClick="ResetZoom"
+                       Title="Reset Zoom (100%)"
+                       Size="Size.Large" />
 
-    <!-- Action Buttons -->
-    <MudButton Variant="Variant.Filled"
-               Color="Color.Primary"
-               StartIcon="@Icons.Material.Filled.Save"
-               OnClick="SaveForm"
-               Size="Size.Large">
-        Save
-    </MudButton>
+        <MudSpacer />
 
-    <MudButton Variant="Variant.Outlined"
-               Color="Color.Primary"
-               StartIcon="@Icons.Material.Filled.Visibility"
-               OnClick="PreviewForm"
-               Size="Size.Large">
-        Preview
-    </MudButton>
+        <!-- Action Buttons -->
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Save"
+                   OnClick="SaveForm"
+                   Size="Size.Large">
+            Save
+        </MudButton>
 
-    <!-- Keyboard Shortcuts Help Button -->
-    <MudIconButton Icon="@Icons.Material.Filled.Keyboard"
-                   Color="Color.Default"
-                   OnClick="ShowKeyboardShortcuts"
-                   Title="Keyboard Shortcuts (Ctrl+/ or F1)"
-                   aria-label="Show keyboard shortcuts help"
-                   Size="Size.Large" />
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Visibility"
+                   OnClick="PreviewForm"
+                   Size="Size.Large">
+            Preview
+        </MudButton>
+
+        <!-- Keyboard Shortcuts Help Button -->
+        <MudIconButton Icon="@Icons.Material.Filled.Keyboard"
+                       Color="Color.Default"
+                       OnClick="ShowKeyboardShortcuts"
+                       Title="Keyboard Shortcuts (Ctrl+/ or F1)"
+                       aria-label="Show keyboard shortcuts help"
+                       Size="Size.Large" />
+    </div>
+
+    <!-- Bottom Row: Page Tabs -->
+    <div style="background-color: white; border-bottom: 2px solid #e0e0e0;">
+        <PageTabs Pages="@currentTemplate.Pages"
+                  CurrentPageIndex="@currentTemplate.CurrentPageIndex"
+                  OnPageSelected="HandlePageSelected"
+                  OnAddPage="HandleAddPage"
+                  OnDeletePage="HandleDeletePage" />
+    </div>
 </div>
 
-<!-- Spacer for editor toolbar (64px nav + ~60px toolbar) -->
-<div style="height: 60px;"></div>
+<!-- Spacer for combined toolbar + page tabs (74px toolbar + 54px tabs = 128px) -->
+<div style="height: 128px;"></div>
 
-<MudLayout Style="height: calc(100vh - 124px);">
+<MudLayout Style="height: calc(100vh - 192px);">
     <!-- Main Content -->
-    <MudMainContent Style="padding: 0; display: flex; height: 100%;">
+    <MudMainContent Style="padding: 49px 0 0 0; display: flex; height: 100%;">
         <!-- Element Library Sidebar -->
-        <div style="width: 300px; border-right: 2px solid #e0e0e0; overflow-y: auto;">
+        <aside style="width: 300px; border-right: 2px solid #e0e0e0; overflow-y: auto; padding: 0 16px 16px 16px;" aria-label="Element library sidebar">
             <ElementLibrary OnElementAdded="HandleElementAdded" @ref="elementLibrary" />
-        </div>
+        </aside>
 
         <!-- Canvas Area -->
-        <div style="flex: 1; overflow: auto;">
+        <main style="flex: 1; overflow: auto;" aria-label="Form canvas" role="main">
             <Canvas @ref="canvasRef"
                     CurrentTemplate="currentTemplate"
                     OnElementSelected="HandleElementSelected"
                     OnElementDropped="HandleElementDropped" />
-        </div>
+        </main>
 
         <!-- Properties Panel (placeholder for now) -->
-        <div style="width: 320px; border-left: 2px solid #e0e0e0; overflow-y: auto; background-color: #fafafa; padding: 16px;">
+        <aside style="width: 320px; border-left: 2px solid #e0e0e0; overflow-y: auto; background-color: #fafafa; padding: 16px;" aria-label="Properties panel">
             <MudText Typo="Typo.h6" Style="margin-bottom: 16px; font-weight: 600;">Properties</MudText>
 
             @{
@@ -822,7 +836,7 @@ else
                     <strong>Page Size:</strong> @currentTemplate.PageSize
                 </MudText>
             </MudPaper>
-        </div>
+        </aside>
     </MudMainContent>
 </MudLayout>
 
@@ -882,6 +896,9 @@ else
             await LoadForm(formGuid);
         }
 
+        // Initialize multi-page mode
+        currentTemplate.EnsureMultiPageInitialized();
+
         // Record initial state
         RecordHistory();
 
@@ -909,6 +926,8 @@ else
             if (loadedForm != null)
             {
                 currentTemplate = loadedForm;
+                // Ensure multi-page mode is initialized after loading
+                currentTemplate.EnsureMultiPageInitialized();
                 hasUnsavedChanges = false;
                 Snackbar.Add($"'{currentTemplate.Name}' loaded successfully!", Severity.Success);
             }
@@ -921,6 +940,70 @@ else
         {
             Snackbar.Add($"Error loading form: {ex.Message}", Severity.Error);
         }
+    }
+
+    // ===== Multi-Page Event Handlers =====
+
+    private void HandlePageSelected(FormPage page)
+    {
+        var index = currentTemplate.Pages.IndexOf(page);
+        if (index >= 0)
+        {
+            currentTemplate.SwitchToPage(index);
+            StateHasChanged();
+        }
+    }
+
+    private void HandleAddPage()
+    {
+        var newPage = currentTemplate.AddPage();
+        currentTemplate.SwitchToPage(currentTemplate.Pages.Count - 1);
+        RecordHistory();
+        Snackbar.Add($"Added {newPage.Name}", Severity.Success);
+        StateHasChanged();
+    }
+
+    private async Task HandleDeletePage(FormPage page)
+    {
+        if (currentTemplate.Pages.Count <= 1)
+        {
+            Snackbar.Add("Cannot delete the last page", Severity.Warning);
+            return;
+        }
+
+        var parameters = new DialogParameters
+        {
+            ["Content"] = $"Are you sure you want to delete '{page.Name}'? This will remove all elements on this page.",
+            ["ConfirmText"] = "Delete Page",
+            ["ConfirmColor"] = Color.Error
+        };
+
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            CloseButton = false,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Delete Page", parameters, options);
+        var result = await dialog.Result;
+
+        // Check if user canceled or didn't confirm
+        if (result == null || result.Canceled)
+        {
+            return;
+        }
+
+        // Verify the user actually confirmed (Data should be true)
+        if (result.Data is not bool confirmed || !confirmed)
+        {
+            return;
+        }
+
+        currentTemplate.RemovePage(page.Id);
+        RecordHistory();
+        Snackbar.Add($"Deleted {page.Name}", Severity.Success);
+        StateHasChanged();
     }
 
     public async ValueTask DisposeAsync()
@@ -981,7 +1064,18 @@ else
     private void HandleElementAdded(FormElement element)
     {
         RecordHistory(); // Record state before change
-        currentTemplate.AddElement(element);
+
+        // Add element to current page (multi-page mode)
+        if (currentTemplate.IsMultiPage && currentTemplate.CurrentPage != null)
+        {
+            currentTemplate.CurrentPage.AddElement(element);
+        }
+        else
+        {
+            // Fallback to legacy mode
+            currentTemplate.AddElement(element);
+        }
+
         selectedElement = element;
         element.IsSelected = true;
         hasUnsavedChanges = true;
@@ -1102,30 +1196,44 @@ else
 
     private void DeleteSelectedElement()
     {
-        var selectedElements = currentTemplate.Elements.Where(e => e.IsSelected).ToList();
+        // Get selected elements from current page
+        var currentElements = currentTemplate.IsMultiPage && currentTemplate.CurrentPage != null
+            ? currentTemplate.CurrentPage.Elements
+            : currentTemplate.Elements;
+        var selectedElements = currentElements.Where(e => e.IsSelected).ToList();
 
-        if (selectedElements.Count > 0)
+        if (selectedElements.Count == 0)
         {
-            RecordHistory(); // Record state before delete
+            return;
+        }
 
-            foreach (var element in selectedElements)
-            {
-                currentTemplate.RemoveElement(element.Id);
-            }
+        RecordHistory(); // Record state before delete
 
-            if (selectedElements.Count == 1)
+        foreach (var element in selectedElements)
+        {
+            // Remove from current page
+            if (currentTemplate.IsMultiPage && currentTemplate.CurrentPage != null)
             {
-                Snackbar.Add($"{selectedElements[0].GetDisplayName()} deleted", Severity.Info);
+                currentTemplate.CurrentPage.RemoveElement(element.Id);
             }
             else
             {
-                Snackbar.Add($"{selectedElements.Count} elements deleted", Severity.Info);
+                currentTemplate.RemoveElement(element.Id);
             }
-
-            selectedElement = null;
-            hasUnsavedChanges = true;
-            StateHasChanged();
         }
+
+        if (selectedElements.Count == 1)
+        {
+            Snackbar.Add($"{selectedElements[0].GetDisplayName()} deleted", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add($"{selectedElements.Count} elements deleted", Severity.Success);
+        }
+
+        selectedElement = null;
+        hasUnsavedChanges = true;
+        StateHasChanged();
     }
 
     private async Task SaveForm()
@@ -1254,8 +1362,11 @@ else
 
     private void DuplicateSelectedElement()
     {
-        // Get all selected elements
-        var selectedElements = currentTemplate.Elements.Where(e => e.IsSelected).ToList();
+        // Get all selected elements from current page
+        var currentElements = currentTemplate.IsMultiPage && currentTemplate.CurrentPage != null
+            ? currentTemplate.CurrentPage.Elements
+            : currentTemplate.Elements;
+        var selectedElements = currentElements.Where(e => e.IsSelected).ToList();
 
         if (!selectedElements.Any())
         {
@@ -1265,8 +1376,15 @@ else
 
         RecordHistory(); // Record state before duplication
 
-        // Clear current selection
-        currentTemplate.ClearSelection();
+        // Clear current selection on current page
+        if (currentTemplate.IsMultiPage && currentTemplate.CurrentPage != null)
+        {
+            currentTemplate.CurrentPage.ClearSelection();
+        }
+        else
+        {
+            currentTemplate.ClearSelection();
+        }
 
         List<FormElement> newElements = new();
 
@@ -1295,8 +1413,15 @@ else
                     duplicatedElement.Y = currentTemplate.HeightInPixels - duplicatedElement.Height - 10;
                 }
 
-                // Add new element and select it
-                currentTemplate.AddElement(duplicatedElement);
+                // Add new element to current page and select it
+                if (currentTemplate.IsMultiPage && currentTemplate.CurrentPage != null)
+                {
+                    currentTemplate.CurrentPage.AddElement(duplicatedElement);
+                }
+                else
+                {
+                    currentTemplate.AddElement(duplicatedElement);
+                }
                 duplicatedElement.IsSelected = true;
                 newElements.Add(duplicatedElement);
             }
@@ -1342,8 +1467,11 @@ else
 
     private void CopySelectedElement()
     {
-        // Get all selected elements
-        var selectedElements = currentTemplate.Elements.Where(e => e.IsSelected).ToList();
+        // Get all selected elements from current page
+        var currentElements = currentTemplate.IsMultiPage && currentTemplate.CurrentPage != null
+            ? currentTemplate.CurrentPage.Elements
+            : currentTemplate.Elements;
+        var selectedElements = currentElements.Where(e => e.IsSelected).ToList();
 
         if (!selectedElements.Any())
         {
@@ -1385,8 +1513,15 @@ else
 
         RecordHistory(); // Record state before paste
 
-        // Clear current selection
-        currentTemplate.ClearSelection();
+        // Clear current selection on current page
+        if (currentTemplate.IsMultiPage && currentTemplate.CurrentPage != null)
+        {
+            currentTemplate.CurrentPage.ClearSelection();
+        }
+        else
+        {
+            currentTemplate.ClearSelection();
+        }
 
         List<FormElement> newElements = new();
 
@@ -1415,8 +1550,15 @@ else
                     pastedElement.Y = currentTemplate.HeightInPixels - pastedElement.Height - 10;
                 }
 
-                // Add new element and select it
-                currentTemplate.AddElement(pastedElement);
+                // Add new element to current page and select it
+                if (currentTemplate.IsMultiPage && currentTemplate.CurrentPage != null)
+                {
+                    currentTemplate.CurrentPage.AddElement(pastedElement);
+                }
+                else
+                {
+                    currentTemplate.AddElement(pastedElement);
+                }
                 pastedElement.IsSelected = true;
                 newElements.Add(pastedElement);
             }
@@ -1477,16 +1619,20 @@ else
     [JSInvokable]
     public void OnSelectAll()
     {
-        // Select all elements on canvas
-        foreach (var element in currentTemplate.Elements)
+        // Select all elements on current page
+        var currentElements = currentTemplate.IsMultiPage && currentTemplate.CurrentPage != null
+            ? currentTemplate.CurrentPage.Elements
+            : currentTemplate.Elements;
+
+        foreach (var element in currentElements)
         {
             element.IsSelected = true;
         }
 
         // Set selected element to the last one for properties panel
-        selectedElement = currentTemplate.Elements.LastOrDefault();
+        selectedElement = currentElements.LastOrDefault();
 
-        Snackbar.Add($"{currentTemplate.Elements.Count} elements selected", Severity.Info);
+        Snackbar.Add($"{currentElements.Count} elements selected", Severity.Info);
         StateHasChanged();
     }
 }

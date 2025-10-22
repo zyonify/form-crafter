@@ -22,8 +22,8 @@
         <!-- Grid background -->
         <div class="canvas-grid" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none;"></div>
 
-        <!-- Render all elements -->
-        @foreach (var element in CurrentTemplate.Elements)
+        <!-- Render all elements from current page -->
+        @foreach (var element in GetCurrentPageElements())
         {
             <div class="canvas-element @(element.IsSelected ? "element-selected" : "") @(isDragging && draggedElement == element ? "element-dragging" : "")"
                  data-element-id="@element.Id"

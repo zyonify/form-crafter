@@ -1,9 +1,13 @@
 @inject NavigationManager Navigation
 
-<MudAppBar Elevation="2" Dense="false" Fixed="true" Style="height: 64px; z-index: 1300;">
-    <MudText Typo="Typo.h5" Style="font-weight: 600; cursor: pointer;" @onclick='() => Navigation.NavigateTo("/")'>
+<MudAppBar Elevation="2" Dense="false" Fixed="true" Style="height: 64px; z-index: 1300;" role="navigation" aria-label="Main navigation">
+    <MudButton Variant="Variant.Text"
+               Color="Color.Inherit"
+               Href="/"
+               Style="font-size: 1.5rem; font-weight: 600; text-transform: none;"
+               aria-label="Form Maker home">
         Form Maker
-    </MudText>
+    </MudButton>
 
     <MudSpacer />
 

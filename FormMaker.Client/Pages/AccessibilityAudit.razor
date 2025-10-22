@@ -15,10 +15,11 @@
 
         <MudStack Row="true" Spacing="2">
             <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                       OnClick="RunAudit" Disabled="isRunning">
+                       OnClick="RunAudit" Disabled="isRunning"
+                       aria-label="@(isRunning ? "Running accessibility audit" : "Run accessibility audit on current page")">
                 @if (isRunning)
                 {
-                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" aria-label="Loading audit results" />
                     <span>Running Audit...</span>
                 }
                 else
