@@ -1,12 +1,12 @@
 {
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/images/*.{png,jpg,gif,ico}", "/css/*"]
+    "exclude": ["/css/*", "/js/*", "/*.{css,js,json,png,jpg,jpeg,gif,svg,ico,woff,woff2,ttf,eot}"]
   },
   "routes": [
     {
       "route": "/api/*",
-      "allowedRoles": ["authenticated", "anonymous"]
+      "allowedRoles": ["anonymous"]
     }
   ],
   "responseOverrides": {
@@ -16,10 +16,8 @@
     }
   },
   "globalHeaders": {
-    "content-security-policy": "default-src https: 'unsafe-eval' 'unsafe-inline'; object-src 'none'"
-  },
-  "mimeTypes": {
-    ".json": "application/json",
-    ".wasm": "application/wasm"
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization"
   }
 }

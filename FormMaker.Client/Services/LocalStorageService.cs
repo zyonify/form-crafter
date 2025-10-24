@@ -166,6 +166,35 @@ public class LocalStorageService
         var json = JsonSerializer.Serialize(forms);
         await _jsRuntime.InvokeVoidAsync("localStorage.setItem", FORMS_LIST_KEY, json);
     }
+
+    /// <summary>
+    /// Generic method to get an item from localStorage
+    /// </summary>
+    public async Task<T?> GetItemAsync<T>(string key)
+    {
+        var json = await _jsRuntime.InvokeAsync<string?>("localStorage.getItem", key);
+        if (string.IsNullOrEmpty(json))
+            return default;
+
+        return JsonSerializer.Deserialize<T>(json);
+    }
+
+    /// <summary>
+    /// Generic method to set an item in localStorage
+    /// </summary>
+    public async Task SetItemAsync<T>(string key, T value)
+    {
+        var json = JsonSerializer.Serialize(value);
+        await _jsRuntime.InvokeVoidAsync("localStorage.setItem", key, json);
+    }
+
+    /// <summary>
+    /// Generic method to remove an item from localStorage
+    /// </summary>
+    public async Task RemoveItemAsync(string key)
+    {
+        await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", key);
+    }
 }
 
 /// <summary>
