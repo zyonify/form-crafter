@@ -1,4 +1,7 @@
+@using FormMaker.Client.Services
 @inject NavigationManager Navigation
+@inject CustomAuthStateProvider AuthStateProvider
+@inject ISnackbar Snackbar
 
 <MudAppBar Elevation="2" Dense="false" Fixed="true" Style="height: 64px; z-index: 1300;" role="navigation" aria-label="Main navigation">
     <MudButton Variant="Variant.Text"
@@ -65,6 +68,40 @@
                Style="margin-left: 8px;">
         About
     </MudButton>
+
+    <MudSpacer />
+
+    <!-- Authentication UI -->
+    <AuthorizeView>
+        <Authorized>
+            <MudText Typo="Typo.body2" Class="mr-4">
+                Welcome, @context.User.Identity?.Name
+            </MudText>
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Logout"
+                       OnClick="HandleLogout"
+                       Size="Size.Large">
+                Logout
+            </MudButton>
+        </Authorized>
+        <NotAuthorized>
+            <MudButton Variant="Variant.Text"
+                       Color="Color.Inherit"
+                       Href="/login"
+                       Size="Size.Large"
+                       Style="margin-left: 8px;">
+                Login
+            </MudButton>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       Href="/register"
+                       Size="Size.Large"
+                       Style="margin-left: 8px;">
+                Sign Up
+            </MudButton>
+        </NotAuthorized>
+    </AuthorizeView>
 </MudAppBar>
 
 @code {
@@ -81,5 +118,12 @@
             return Variant.Filled;
 
         return Variant.Text;
+    }
+
+    private async Task HandleLogout()
+    {
+        await AuthStateProvider.MarkUserAsLoggedOut();
+        Snackbar.Add("You've been logged out successfully", Severity.Info);
+        Navigation.NavigateTo("/login");
     }
 }

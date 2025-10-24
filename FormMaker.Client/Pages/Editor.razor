@@ -3,6 +3,7 @@
 @using FormMaker.Shared.Models.Elements
 @using FormMaker.Client.Components
 @using Microsoft.JSInterop
+@using Microsoft.AspNetCore.Components.Forms
 
 <PageTitle>Form Maker - Editor</PageTitle>
 
@@ -90,6 +91,14 @@ else
                    OnClick="PreviewForm"
                    Size="Size.Large">
             Preview
+        </MudButton>
+
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Secondary"
+                   StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                   OnClick="ExportToPdf"
+                   Size="Size.Large">
+            Export PDF
         </MudButton>
 
         <!-- Keyboard Shortcuts Help Button -->
@@ -241,6 +250,30 @@ else
                                       Margin="Margin.Dense"
                                       Style="margin-bottom: 12px;"
                                       HelperText="Enter the URL of an image" />
+
+                        <MudText Typo="Typo.body2" Style="margin: 12px 0 8px 0; text-align: center;">— OR —</MudText>
+
+                        <MudFileUpload T="IBrowserFile"
+                                       Accept=".png,.jpg,.jpeg,.gif,.svg,.webp"
+                                       FilesChanged="@(async (file) => await HandleImageUpload(image, file))"
+                                       MaximumFileCount="1">
+                            <ActivatorContent>
+                                <MudButton Variant="Variant.Filled"
+                                          Color="Color.Primary"
+                                          StartIcon="@Icons.Material.Filled.CloudUpload"
+                                          FullWidth="true"
+                                          Style="margin-bottom: 12px;">
+                                    Upload Image
+                                </MudButton>
+                            </ActivatorContent>
+                        </MudFileUpload>
+
+                        @if (!string.IsNullOrEmpty(image.ImageUrl) && image.ImageUrl.StartsWith("data:image"))
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Success" Style="margin-bottom: 12px;">
+                                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" /> Image uploaded successfully
+                            </MudText>
+                        }
 
                         <MudTextField @bind-Value="image.AltText"
                                       Label="Alt Text (Accessibility)"
@@ -884,6 +917,9 @@ else
     [Inject]
     private IDialogService DialogService { get; set; } = default!;
 
+    [Inject]
+    private FormMaker.Client.Services.PdfExportService PdfExportService { get; set; } = default!;
+
     [Parameter]
     [SupplyParameterFromQuery(Name = "id")]
     public string? FormId { get; set; }
@@ -1166,6 +1202,42 @@ else
         }
     }
 
+    private async Task HandleImageUpload(ImageElement image, IBrowserFile file)
+    {
+        if (file == null) return;
+
+        try
+        {
+            // Limit file size to 2MB
+            const long maxFileSize = 2 * 1024 * 1024;
+
+            if (file.Size > maxFileSize)
+            {
+                Snackbar.Add("Image file size must be less than 2MB", Severity.Error);
+                return;
+            }
+
+            // Read the file and convert to Base64
+            using var stream = file.OpenReadStream(maxFileSize);
+            using var memoryStream = new System.IO.MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            var bytes = memoryStream.ToArray();
+            var base64 = Convert.ToBase64String(bytes);
+            var contentType = file.ContentType;
+
+            // Set the image URL to the Base64 data URI
+            image.ImageUrl = $"data:{contentType};base64,{base64}";
+            hasUnsavedChanges = true;
+
+            Snackbar.Add("Image uploaded successfully", Severity.Success);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error uploading image: {ex.Message}", Severity.Error);
+        }
+    }
+
     private void AddTableRow(TableElement table)
     {
         table.AddRow();
@@ -1287,6 +1359,29 @@ else
     {
         isPreviewMode = false;
         StateHasChanged();
+    }
+
+    // PDF Export method
+    private async Task ExportToPdf()
+    {
+        try
+        {
+            // Export current form template as blank PDF
+            var success = await PdfExportService.ExportBlankFormAsync(currentTemplate);
+
+            if (success)
+            {
+                Snackbar.Add("Form exported to PDF successfully!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Failed to export PDF. Please try again.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error exporting PDF: {ex.Message}", Severity.Error);
+        }
     }
 
     // Zoom handler methods

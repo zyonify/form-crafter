@@ -50,7 +50,7 @@
         <div class="form-preview" style="width: @(GetScaledWidth())px; height: @(GetScaledHeight())px; background-color: @CurrentTemplate.BackgroundColor; position: relative; margin: 0 auto;">
 
             <!-- Render all elements as functional inputs -->
-            @foreach (var element in CurrentTemplate.Elements.OrderBy(e => e.Properties.ZIndex))
+            @foreach (var element in GetCurrentPageElements().OrderBy(e => e.Properties.ZIndex))
             {
                 var scaleFactor = GetScaleFactor();
                 <div style="position: absolute;
@@ -144,5 +144,30 @@
     private void SetFieldValue(Guid elementId, string value)
     {
         fieldValues[elementId] = value;
+    }
+
+    private List<FormElement> GetCurrentPageElements()
+    {
+        // Ensure multi-page is initialized if needed
+        if (CurrentTemplate != null)
+        {
+            CurrentTemplate.EnsureMultiPageInitialized();
+        }
+
+        // If multi-page mode is enabled and we have pages, use current page
+        if (CurrentTemplate?.IsMultiPage == true &&
+            CurrentTemplate.Pages != null &&
+            CurrentTemplate.Pages.Count > 0)
+        {
+            int pageIndex = Math.Max(0, Math.Min(CurrentTemplate.CurrentPageIndex, CurrentTemplate.Pages.Count - 1));
+            var currentPage = CurrentTemplate.Pages[pageIndex];
+            if (currentPage?.Elements != null)
+            {
+                return currentPage.Elements;
+            }
+        }
+
+        // Fallback to legacy Elements list for backward compatibility
+        return CurrentTemplate?.Elements ?? new List<FormElement>();
     }
 }

@@ -226,6 +226,22 @@ public class FormTemplate
     /// </summary>
     public void EnsureMultiPageInitialized()
     {
+        // If already multi-page with pages AND has legacy elements, migrate them
+        if (IsMultiPage && Pages.Count > 0 && Elements.Count > 0)
+        {
+            // Migrate legacy elements to the current page
+            var currentPage = Pages[CurrentPageIndex >= 0 && CurrentPageIndex < Pages.Count ? CurrentPageIndex : 0];
+            foreach (var element in Elements)
+            {
+                if (!currentPage.Elements.Contains(element))
+                {
+                    currentPage.Elements.Add(element);
+                }
+            }
+            Elements.Clear(); // Clear legacy list after migration
+            return;
+        }
+
         // If already multi-page with pages, we're good
         if (IsMultiPage && Pages.Count > 0)
             return;
@@ -241,6 +257,7 @@ public class FormTemplate
             };
             Pages = new List<FormPage> { page };
             IsMultiPage = true;
+            Elements.Clear(); // Clear legacy list after migration
             return;
         }
 

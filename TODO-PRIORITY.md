@@ -1,5 +1,9 @@
 # Form Crafter - Priority TODO List
 
+⚠️ **ARCHIVED (2025-10-22):** This file has been consolidated into TODO.md. All completed items have been marked as done in the main TODO file. Please refer to TODO.md for the current development roadmap.
+
+---
+
 ## Phase 1: Testing & Quality (Current Focus)
 
 ### ✅ COMPLETED
