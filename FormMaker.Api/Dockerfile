@@ -1,11 +1,24 @@
-# Use the official Azure Functions .NET 8 runtime image
-FROM mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated8.0
+# Build stage
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
 
-# Set the working directory
+# Copy csproj and restore dependencies
+COPY FormMaker.Api/FormMaker.Api.csproj FormMaker.Api/
+COPY FormMaker.Shared/FormMaker.Shared.csproj FormMaker.Shared/
+RUN dotnet restore "FormMaker.Api/FormMaker.Api.csproj"
+
+# Copy everything else and build
+COPY FormMaker.Api/ FormMaker.Api/
+COPY FormMaker.Shared/ FormMaker.Shared/
+WORKDIR /src/FormMaker.Api
+RUN dotnet publish "FormMaker.Api.csproj" -c Release -o /app/publish
+
+# Runtime stage
+FROM mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated8.0
 WORKDIR /home/site/wwwroot
 
-# Copy the published API files
-COPY bin/Release/net8.0/publish/ .
+# Copy the published files from build stage
+COPY --from=build /app/publish .
 
 # Set environment variables for Azure Functions
 ENV AzureWebJobsScriptRoot=/home/site/wwwroot \
