@@ -2,11 +2,10 @@ services:
   - type: web
     name: formmaker-api
     runtime: docker
-    repo: https://github.com/zyonify/form-maker
+    repo: https://github.com/zyonify/form-crafter
     region: oregon
     branch: main
-    rootDir: FormMaker.Api
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./FormMaker.Api/Dockerfile
     dockerCommand: /azure-functions-host/Microsoft.Azure.WebJobs.Script.WebHost
     envVars:
       - key: AzureWebJobsStorage
@@ -23,4 +22,3 @@ services:
         value: Data Source=/app/data/formmaker.db
     plan: free
     healthCheckPath: /
-    buildCommand: dotnet publish -c Release
