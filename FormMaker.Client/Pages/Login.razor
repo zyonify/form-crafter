@@ -65,7 +65,7 @@
 
         <MudText Typo="Typo.body2" Align="Align.Center">
             Don't have an account?
-            <MudLink Href="/register" Color="Color.Primary">Sign Up</MudLink>
+            <MudLink OnClick='@(() => Navigation.NavigateTo("/register"))' Color="Color.Primary" Style="cursor: pointer;">Sign Up</MudLink>
         </MudText>
     </MudPaper>
 </MudContainer>
