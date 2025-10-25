@@ -87,6 +87,10 @@ jobs:
     - name: Build Blazor WASM
       run: dotnet publish FormMaker.Client/FormMaker.Client.csproj -c Release -o publish
 
+    - name: Change base tag in index.html
+      run: |
+        sed -i 's|<base href="/form-crafter/" />|<base href="/form-crafter/" />|g' publish/wwwroot/index.html
+
     - name: Add .nojekyll file
       run: touch publish/wwwroot/.nojekyll
 
