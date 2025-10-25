@@ -1,5 +1,6 @@
 @page "/help"
 @using FormMaker.Client.Components
+@inject NavigationManager Navigation
 
 <PageTitle>Help & Documentation - Form Maker</PageTitle>
 
@@ -234,7 +235,7 @@
                            Color="Color.Primary"
                            Size="Size.Large"
                            StartIcon="@Icons.Material.Filled.Info"
-                           Href="/about"
+                           OnClick='@(() => Navigation.NavigateTo("/about"))'
                            Style="height: 56px; min-width: 180px; font-size: 18px;">
                     About Form Maker
                 </MudButton>

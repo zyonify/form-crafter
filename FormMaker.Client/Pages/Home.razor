@@ -1,5 +1,6 @@
 @page "/"
 @using FormMaker.Client.Components
+@inject NavigationManager Navigation
 
 <PageTitle>Form Maker - Build Professional Forms with Ease</PageTitle>
 
@@ -24,7 +25,7 @@
                        Color="Color.Primary"
                        Size="Size.Large"
                        StartIcon="@Icons.Material.Filled.Add"
-                       Href="/editor"
+                       OnClick='@(() => Navigation.NavigateTo("/editor"))'
                        Style="height: 64px; min-width: 220px; font-size: 20px; font-weight: 600;">
                 Create New Form
             </MudButton>
@@ -33,7 +34,7 @@
                        Color="Color.Primary"
                        Size="Size.Large"
                        StartIcon="@Icons.Material.Filled.Description"
-                       Href="/templates"
+                       OnClick='@(() => Navigation.NavigateTo("/templates"))'
                        Style="height: 64px; min-width: 220px; font-size: 20px; font-weight: 600;">
                 Browse Templates
             </MudButton>
@@ -42,7 +43,7 @@
                        Color="Color.Primary"
                        Size="Size.Large"
                        StartIcon="@Icons.Material.Filled.Folder"
-                       Href="/forms"
+                       OnClick='@(() => Navigation.NavigateTo("/forms"))'
                        Style="height: 64px; min-width: 220px; font-size: 20px; font-weight: 600;">
                 View My Forms
             </MudButton>
@@ -160,7 +161,7 @@
                    Color="Color.Primary"
                    Size="Size.Large"
                    StartIcon="@Icons.Material.Filled.RocketLaunch"
-                   Href="/editor"
+                   OnClick='@(() => Navigation.NavigateTo("/editor"))'
                    Style="height: 64px; min-width: 240px; font-size: 20px; font-weight: 600;">
             Start Building Now
         </MudButton>
