@@ -65,7 +65,7 @@
 
         <MudText Typo="Typo.body2" Align="Align.Center">
             Don't have an account?
-            <MudLink OnClick='@(() => Navigation.NavigateTo("/register"))' Color="Color.Primary" Style="cursor: pointer;">Sign Up</MudLink>
+            <MudLink OnClick='@(() => Navigation.NavigateTo("register"))' Color="Color.Primary" Style="cursor: pointer;">Sign Up</MudLink>
         </MudText>
     </MudPaper>
 </MudContainer>
@@ -103,7 +103,7 @@
             {
                 await AuthStateProvider.MarkUserAsAuthenticated(response.Token, response.User);
                 Snackbar.Add("Welcome back!", Severity.Success);
-                Navigation.NavigateTo("/forms");
+                Navigation.NavigateTo("forms");
             }
         }
         catch (HttpRequestException ex)
