@@ -84,8 +84,14 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
+    - name: Clean previous builds
+      run: dotnet clean FormMaker.Client/FormMaker.Client.csproj -c Release
+
+    - name: Restore dependencies
+      run: dotnet restore FormMaker.Client/FormMaker.Client.csproj
+
     - name: Build Blazor WASM
-      run: dotnet publish FormMaker.Client/FormMaker.Client.csproj -c Release -o publish
+      run: dotnet publish FormMaker.Client/FormMaker.Client.csproj -c Release -o publish --no-restore
 
     - name: Add .nojekyll file
       run: touch publish/wwwroot/.nojekyll
