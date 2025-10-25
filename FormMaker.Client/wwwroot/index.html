@@ -40,7 +40,9 @@
             var redirect = sessionStorage.getItem('redirect');
             if (redirect) {
                 sessionStorage.removeItem('redirect');
-                history.replaceState(null, null, redirect);
+                // Get base path from base tag
+                var base = document.querySelector('base').getAttribute('href');
+                history.replaceState(null, null, base.slice(0, -1) + redirect);
             }
         })();
     </script>
