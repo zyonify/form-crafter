@@ -34,6 +34,16 @@
     </div>
     <!-- jsPDF for client-side PDF generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        // GitHub Pages SPA redirect handler
+        (function() {
+            var redirect = sessionStorage.getItem('redirect');
+            if (redirect) {
+                sessionStorage.removeItem('redirect');
+                history.replaceState(null, null, redirect);
+            }
+        })();
+    </script>
     <script src="_framework/blazor.webassembly.js"></script>
     <!-- MudBlazor JS -->
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
