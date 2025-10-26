@@ -11,34 +11,20 @@ public class CorsMiddleware : IFunctionsWorkerMiddleware
 {
     public async Task Invoke(FunctionContext context, FunctionExecutionDelegate next)
     {
-        // Get the HTTP request data
+        // Continue with the function execution first
+        await next(context);
+
+        // Get the HTTP request and response data
         var requestData = await context.GetHttpRequestDataAsync();
 
         if (requestData != null)
         {
-            // Handle preflight OPTIONS requests
-            if (requestData.Method.Equals("OPTIONS", StringComparison.OrdinalIgnoreCase))
-            {
-                var response = requestData.CreateResponse(System.Net.HttpStatusCode.OK);
-                AddCorsHeaders(response, requestData);
-
-                var invocationResult = context.GetInvocationResult();
-                invocationResult.Value = response;
-                return;
-            }
-        }
-
-        // Continue with the function execution
-        await next(context);
-
-        // Add CORS headers to the response
-        var httpReqData = await context.GetHttpRequestDataAsync();
-        if (httpReqData != null)
-        {
             var invocationResult = context.GetInvocationResult();
-            if (invocationResult.Value is HttpResponseData responseData)
+
+            // Add CORS headers to any HTTP response
+            if (invocationResult?.Value is HttpResponseData responseData)
             {
-                AddCorsHeaders(responseData, httpReqData);
+                AddCorsHeaders(responseData, requestData);
             }
         }
     }
