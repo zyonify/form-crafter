@@ -19,7 +19,15 @@ public class FormService
     /// <summary>
     /// Create a new shareable form from a template
     /// </summary>
-    public async Task<Form> CreateFormAsync(Guid templateId, string title, string? description, bool requireAuth = false, int? maxSubmissions = null, DateTime? expiresAt = null)
+    public async Task<Form> CreateFormAsync(
+        Guid templateId,
+        string title,
+        string? description,
+        bool requireAuth = false,
+        int? maxSubmissions = null,
+        DateTime? expiresAt = null,
+        string? notificationEmail = null,
+        bool enableNotifications = false)
     {
         // Verify template exists and belongs to a user
         var template = await _context.Templates
@@ -53,6 +61,8 @@ public class FormService
             RequireAuth = requireAuth,
             MaxSubmissions = maxSubmissions,
             ExpiresAt = expiresAt,
+            NotificationEmail = notificationEmail,
+            EnableNotifications = enableNotifications,
             IsPublic = true,
             IsActive = true
         };

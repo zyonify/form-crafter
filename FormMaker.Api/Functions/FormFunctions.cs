@@ -66,7 +66,9 @@ public class FormFunctions
                 request.Description,
                 request.RequireAuth,
                 request.MaxSubmissions,
-                request.ExpiresAt);
+                request.ExpiresAt,
+                request.NotificationEmail,
+                request.EnableNotifications);
 
             // Return response
             var response = req.CreateResponse(HttpStatusCode.Created);
@@ -384,7 +386,9 @@ public class FormFunctions
             CreatedAt = form.CreatedAt,
             ExpiresAt = form.ExpiresAt,
             ViewCount = form.ViewCount,
-            LastAccessedAt = form.LastAccessedAt
+            LastAccessedAt = form.LastAccessedAt,
+            NotificationEmail = form.NotificationEmail,
+            EnableNotifications = form.EnableNotifications
         };
     }
 }

@@ -198,11 +198,37 @@ public class ApiService
     }
 
     /// <summary>
-    /// Get all submissions for a form
+    /// Get all submissions for a form with optional filters
     /// </summary>
-    public async Task<SubmissionListResponse?> GetSubmissionsByFormAsync(Guid formId, int page = 1, int pageSize = 20)
+    public async Task<SubmissionListResponse?> GetSubmissionsByFormAsync(
+        Guid formId,
+        int page = 1,
+        int pageSize = 20,
+        DateTime? startDate = null,
+        DateTime? endDate = null,
+        bool? isReviewed = null,
+        string? emailSearch = null)
     {
-        return await GetAsync<SubmissionListResponse>($"submissions/form/{formId}?page={page}&pageSize={pageSize}");
+        var queryParams = new List<string>
+        {
+            $"page={page}",
+            $"pageSize={pageSize}"
+        };
+
+        if (startDate.HasValue)
+            queryParams.Add($"startDate={startDate.Value:yyyy-MM-dd}");
+
+        if (endDate.HasValue)
+            queryParams.Add($"endDate={endDate.Value:yyyy-MM-dd}");
+
+        if (isReviewed.HasValue)
+            queryParams.Add($"isReviewed={isReviewed.Value}");
+
+        if (!string.IsNullOrWhiteSpace(emailSearch))
+            queryParams.Add($"emailSearch={Uri.EscapeDataString(emailSearch)}");
+
+        var queryString = string.Join("&", queryParams);
+        return await GetAsync<SubmissionListResponse>($"submissions/form/{formId}?{queryString}");
     }
 
     /// <summary>
@@ -342,6 +368,8 @@ public class CreateFormRequest
     public bool RequireAuth { get; set; } = false;
     public int? MaxSubmissions { get; set; }
     public DateTime? ExpiresAt { get; set; }
+    public string? NotificationEmail { get; set; }
+    public bool EnableNotifications { get; set; } = false;
 }
 
 public class UpdateFormRequest
@@ -370,6 +398,8 @@ public class FormResponse
     public DateTime? ExpiresAt { get; set; }
     public int ViewCount { get; set; }
     public DateTime? LastAccessedAt { get; set; }
+    public string? NotificationEmail { get; set; }
+    public bool EnableNotifications { get; set; }
 }
 
 public class PublicFormResponse

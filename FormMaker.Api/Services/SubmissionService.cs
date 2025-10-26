@@ -159,6 +159,7 @@ public class SubmissionService
         DateTime? startDate = null,
         DateTime? endDate = null,
         bool? isReviewed = null,
+        string? emailSearch = null,
         int page = 1,
         int pageSize = 20)
     {
@@ -178,6 +179,11 @@ public class SubmissionService
         if (isReviewed.HasValue)
         {
             query = query.Where(s => s.IsReviewed == isReviewed.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(emailSearch))
+        {
+            query = query.Where(s => s.SubmitterEmail != null && s.SubmitterEmail.Contains(emailSearch));
         }
 
         var totalCount = await query.CountAsync();

@@ -47,6 +47,96 @@
         </div>
     </div>
 
+    <!-- Analytics Summary -->
+    @if (submissionsData != null && submissionsData.TotalCount > 0)
+    {
+        <MudPaper Elevation="1" Style="padding: 24px; margin-bottom: 24px;">
+            <MudText Typo="Typo.h6" Style="margin-bottom: 16px;">Analytics</MudText>
+            <MudGrid>
+                <MudItem xs="12" sm="6" md="3">
+                    <div style="text-align: center;">
+                        <MudIcon Icon="@Icons.Material.Filled.Assignment" Color="Color.Primary" Size="Size.Large" />
+                        <MudText Typo="Typo.h4" Style="margin-top: 8px;">@submissionsData.TotalCount</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Total Submissions</MudText>
+                    </div>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <div style="text-align: center;">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" />
+                        <MudText Typo="Typo.h4" Style="margin-top: 8px;">@reviewedCount</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Reviewed</MudText>
+                    </div>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <div style="text-align: center;">
+                        <MudIcon Icon="@Icons.Material.Filled.PendingActions" Color="Color.Warning" Size="Size.Large" />
+                        <MudText Typo="Typo.h4" Style="margin-top: 8px;">@pendingCount</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Pending</MudText>
+                    </div>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <div style="text-align: center;">
+                        <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Color="Color.Info" Size="Size.Large" />
+                        <MudText Typo="Typo.h4" Style="margin-top: 8px;">@recentCount</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Last 7 Days</MudText>
+                    </div>
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+    }
+
+    <!-- Filters -->
+    <MudPaper Elevation="1" Style="padding: 16px; margin-bottom: 24px;">
+        <MudText Typo="Typo.h6" Style="margin-bottom: 16px;">Filters</MudText>
+        <MudGrid>
+            <MudItem xs="12" sm="6" md="3">
+                <MudDatePicker Label="Start Date"
+                               @bind-Date="startDate"
+                               Variant="Variant.Outlined"
+                               Clearable="true" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudDatePicker Label="End Date"
+                               @bind-Date="endDate"
+                               Variant="Variant.Outlined"
+                               Clearable="true" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudSelect T="string"
+                           Label="Status"
+                           @bind-Value="reviewStatusFilter"
+                           Variant="Variant.Outlined"
+                           Clearable="true">
+                    <MudSelectItem T="string" Value="@("all")">All</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("reviewed")">Reviewed</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("pending")">Pending</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string"
+                              Label="Search Email"
+                              @bind-Value="emailSearch"
+                              Variant="Variant.Outlined"
+                              Clearable="true"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search" />
+            </MudItem>
+        </MudGrid>
+        <div style="margin-top: 16px; text-align: right;">
+            <MudButton Variant="Variant.Text"
+                       OnClick="ClearFilters"
+                       StartIcon="@Icons.Material.Filled.Clear">
+                Clear Filters
+            </MudButton>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       OnClick="ApplyFilters"
+                       StartIcon="@Icons.Material.Filled.FilterList">
+                Apply Filters
+            </MudButton>
+        </div>
+    </MudPaper>
+
     @if (isLoading)
     {
         <!-- Loading State -->
@@ -199,6 +289,17 @@
     private bool showDetailDialog = false;
     private DialogOptions dialogOptions = new() { MaxWidth = MaxWidth.Medium, FullWidth = true };
 
+    // Filter variables
+    private DateTime? startDate;
+    private DateTime? endDate;
+    private string? reviewStatusFilter = "all";
+    private string? emailSearch;
+
+    // Analytics variables
+    private int reviewedCount => submissionsData?.Submissions.Count(s => s.IsReviewed) ?? 0;
+    private int pendingCount => submissionsData?.Submissions.Count(s => !s.IsReviewed) ?? 0;
+    private int recentCount => submissionsData?.Submissions.Count(s => s.SubmittedAt >= DateTime.UtcNow.AddDays(-7)) ?? 0;
+
     protected override async Task OnInitializedAsync()
     {
         await LoadSubmissions();
@@ -218,7 +319,22 @@
 
         try
         {
-            submissionsData = await ApiService.GetSubmissionsByFormAsync(formGuid, currentPage, PageSize);
+            // Determine review status filter
+            bool? isReviewedFilter = reviewStatusFilter switch
+            {
+                "reviewed" => true,
+                "pending" => false,
+                _ => null
+            };
+
+            submissionsData = await ApiService.GetSubmissionsByFormAsync(
+                formGuid,
+                currentPage,
+                PageSize,
+                startDate,
+                endDate,
+                isReviewedFilter,
+                emailSearch);
         }
         catch (Exception ex)
         {
@@ -317,5 +433,21 @@
         {
             Snackbar.Add($"Error exporting: {ex.Message}", Severity.Error);
         }
+    }
+
+    private async Task ApplyFilters()
+    {
+        currentPage = 1; // Reset to first page when filtering
+        await LoadSubmissions();
+    }
+
+    private async Task ClearFilters()
+    {
+        startDate = null;
+        endDate = null;
+        reviewStatusFilter = "all";
+        emailSearch = null;
+        currentPage = 1;
+        await LoadSubmissions();
     }
 }

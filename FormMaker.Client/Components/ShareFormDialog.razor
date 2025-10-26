@@ -93,6 +93,25 @@
                        Color="Color.Primary"
                        T="bool"
                        Class="mb-3" />
+
+            <MudDivider Class="my-3" />
+
+            <MudSwitch @bind-Value="enableNotifications"
+                       Label="Send email notifications for new submissions"
+                       Color="Color.Primary"
+                       T="bool"
+                       Class="mb-3" />
+
+            @if (enableNotifications)
+            {
+                <MudTextField @bind-Value="notificationEmail"
+                              Label="Notification Email"
+                              Variant="Variant.Outlined"
+                              Required="true"
+                              InputType="InputType.Email"
+                              Class="mb-3"
+                              HelperText="Email address to receive submission notifications" />
+            }
         }
     </DialogContent>
     <DialogActions>
@@ -127,6 +146,8 @@
     private int? maxSubmissions;
     private DateTime? expiresAt;
     private bool requireAuth = false;
+    private bool enableNotifications = false;
+    private string? notificationEmail;
 
     private bool isCreating = false;
     private string? shareLink;
@@ -161,7 +182,9 @@
                 Description = description,
                 RequireAuth = requireAuth,
                 MaxSubmissions = maxSubmissions,
-                ExpiresAt = expiresAt?.ToUniversalTime()
+                ExpiresAt = expiresAt?.ToUniversalTime(),
+                NotificationEmail = notificationEmail,
+                EnableNotifications = enableNotifications
             };
 
             formResponse = await ApiService.CreateFormAsync(request);

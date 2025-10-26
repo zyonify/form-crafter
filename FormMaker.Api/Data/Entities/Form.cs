@@ -76,6 +76,16 @@ public class Form
     public DateTime? LastAccessedAt { get; set; }
 
     /// <summary>
+    /// Email address to notify when submissions are received
+    /// </summary>
+    public string? NotificationEmail { get; set; }
+
+    /// <summary>
+    /// Whether to send email notifications for new submissions
+    /// </summary>
+    public bool EnableNotifications { get; set; } = false;
+
+    /// <summary>
     /// Soft delete flag
     /// </summary>
     public bool IsDeleted { get; set; } = false;

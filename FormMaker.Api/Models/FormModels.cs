@@ -11,6 +11,8 @@ public class CreateFormRequest
     public bool RequireAuth { get; set; } = false;
     public int? MaxSubmissions { get; set; }
     public DateTime? ExpiresAt { get; set; }
+    public string? NotificationEmail { get; set; }
+    public bool EnableNotifications { get; set; } = false;
 }
 
 /// <summary>
@@ -45,6 +47,8 @@ public class FormResponse
     public DateTime? ExpiresAt { get; set; }
     public int ViewCount { get; set; }
     public DateTime? LastAccessedAt { get; set; }
+    public string? NotificationEmail { get; set; }
+    public bool EnableNotifications { get; set; }
 }
 
 /// <summary>

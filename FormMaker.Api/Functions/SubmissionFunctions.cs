@@ -133,6 +133,7 @@ public class SubmissionFunctions
             var startDate = DateTime.TryParse(query["startDate"], out var sd) ? sd : (DateTime?)null;
             var endDate = DateTime.TryParse(query["endDate"], out var ed) ? ed : (DateTime?)null;
             var isReviewed = bool.TryParse(query["isReviewed"], out var ir) ? ir : (bool?)null;
+            var emailSearch = query["emailSearch"];
 
             // Get submissions with filters
             var (submissions, totalCount) = await _submissionService.GetFilteredSubmissionsAsync(
@@ -140,6 +141,7 @@ public class SubmissionFunctions
                 startDate,
                 endDate,
                 isReviewed,
+                emailSearch,
                 page,
                 pageSize);
 
