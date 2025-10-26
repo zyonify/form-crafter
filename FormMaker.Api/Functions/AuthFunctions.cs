@@ -30,11 +30,23 @@ public class AuthFunctions
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "auth/register")] HttpRequestData req)
     {
         _logger.LogInformation("Register endpoint called");
+        _logger.LogInformation("Request headers: {Headers}", string.Join(", ", req.Headers.Select(h => $"{h.Key}={string.Join(",", h.Value)}")));
+        _logger.LogInformation("Request Content-Type: {ContentType}", req.Headers.TryGetValues("Content-Type", out var ct) ? string.Join(",", ct) : "none");
 
         try
         {
-            // Parse request body
-            var request = await JsonSerializer.DeserializeAsync<RegisterRequest>(req.Body);
+            // Read the body as string first for debugging
+            string bodyContent;
+            using (var reader = new StreamReader(req.Body))
+            {
+                bodyContent = await reader.ReadToEndAsync();
+            }
+            _logger.LogInformation("Request body content: {Body}", bodyContent);
+
+            // Parse request body from the string
+            var request = string.IsNullOrWhiteSpace(bodyContent)
+                ? null
+                : JsonSerializer.Deserialize<RegisterRequest>(bodyContent);
 
             if (request == null)
             {
@@ -90,11 +102,23 @@ public class AuthFunctions
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "auth/login")] HttpRequestData req)
     {
         _logger.LogInformation("Login endpoint called");
+        _logger.LogInformation("Request headers: {Headers}", string.Join(", ", req.Headers.Select(h => $"{h.Key}={string.Join(",", h.Value)}")));
+        _logger.LogInformation("Request Content-Type: {ContentType}", req.Headers.TryGetValues("Content-Type", out var ct) ? string.Join(",", ct) : "none");
 
         try
         {
-            // Parse request body
-            var request = await JsonSerializer.DeserializeAsync<LoginRequest>(req.Body);
+            // Read the body as string first for debugging
+            string bodyContent;
+            using (var reader = new StreamReader(req.Body))
+            {
+                bodyContent = await reader.ReadToEndAsync();
+            }
+            _logger.LogInformation("Request body content: {Body}", bodyContent);
+
+            // Parse request body from the string
+            var request = string.IsNullOrWhiteSpace(bodyContent)
+                ? null
+                : JsonSerializer.Deserialize<LoginRequest>(bodyContent);
 
             if (request == null)
             {
