@@ -307,19 +307,35 @@
 
     private async Task SubmitForm()
     {
-        if (isSubmitting || isSubmitted)
+        if (isSubmitting || isSubmitted || ShareLink == null)
             return;
 
         isSubmitting = true;
 
         try
         {
-            // TODO: Submit form data to API when SubmissionFunctions is implemented
-            // For now, just show success message
-            await Task.Delay(1000); // Simulate API call
+            // Serialize form values to JSON
+            var jsonData = System.Text.Json.JsonSerializer.Serialize(formValues);
 
-            isSubmitted = true;
-            Snackbar.Add("Form submitted successfully!", Severity.Success);
+            // Create submission request
+            var request = new SubmitFormRequest
+            {
+                JsonData = jsonData,
+                SubmitterEmail = null // Could add email field to form if needed
+            };
+
+            // Submit to API
+            var result = await ApiService.SubmitFormAsync(ShareLink, request);
+
+            if (result != null)
+            {
+                isSubmitted = true;
+                Snackbar.Add("Form submitted successfully!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Failed to submit form. Please try again.", Severity.Error);
+            }
         }
         catch (Exception ex)
         {

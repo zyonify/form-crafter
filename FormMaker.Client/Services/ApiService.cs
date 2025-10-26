@@ -186,6 +186,70 @@ public class ApiService
     {
         return await DeleteAsync($"forms/{formId}");
     }
+
+    // Submission API Methods
+
+    /// <summary>
+    /// Submit a form response (no auth required)
+    /// </summary>
+    public async Task<SubmitFormResponse?> SubmitFormAsync(string shareLink, SubmitFormRequest request)
+    {
+        return await PostUnauthenticatedAsync<SubmitFormRequest, SubmitFormResponse>($"forms/{shareLink}/submit", request);
+    }
+
+    /// <summary>
+    /// Get all submissions for a form
+    /// </summary>
+    public async Task<SubmissionListResponse?> GetSubmissionsByFormAsync(Guid formId, int page = 1, int pageSize = 20)
+    {
+        return await GetAsync<SubmissionListResponse>($"submissions/form/{formId}?page={page}&pageSize={pageSize}");
+    }
+
+    /// <summary>
+    /// Get a specific submission by ID
+    /// </summary>
+    public async Task<SubmissionResponse?> GetSubmissionByIdAsync(Guid submissionId)
+    {
+        return await GetAsync<SubmissionResponse>($"submissions/{submissionId}");
+    }
+
+    /// <summary>
+    /// Mark a submission as reviewed
+    /// </summary>
+    public async Task<SubmissionResponse?> ReviewSubmissionAsync(Guid submissionId, string? reviewNotes = null)
+    {
+        var request = new ReviewSubmissionRequest { ReviewNotes = reviewNotes };
+        return await PutAsync<ReviewSubmissionRequest, SubmissionResponse>($"submissions/{submissionId}/review", request);
+    }
+
+    /// <summary>
+    /// Delete a submission
+    /// </summary>
+    public async Task<bool> DeleteSubmissionAsync(Guid submissionId)
+    {
+        return await DeleteAsync($"submissions/{submissionId}");
+    }
+
+    /// <summary>
+    /// Export submissions to CSV
+    /// </summary>
+    public async Task<string?> ExportSubmissionsToCsvAsync(Guid formId)
+    {
+        try
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, $"submissions/form/{formId}/export");
+            await AddAuthHeaderAsync(request);
+
+            var response = await _httpClient.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+
+            return await response.Content.ReadAsStringAsync();
+        }
+        catch
+        {
+            return null;
+        }
+    }
 }
 
 /// <summary>
@@ -321,4 +385,47 @@ public class FormListResponse
 {
     public required List<FormResponse> Forms { get; set; }
     public int TotalCount { get; set; }
+}
+
+// Submission Models
+
+public class SubmitFormRequest
+{
+    public required string JsonData { get; set; }
+    public string? SubmitterEmail { get; set; }
+}
+
+public class SubmitFormResponse
+{
+    public Guid SubmissionId { get; set; }
+    public required string Message { get; set; }
+}
+
+public class SubmissionResponse
+{
+    public Guid Id { get; set; }
+    public Guid FormId { get; set; }
+    public required string JsonData { get; set; }
+    public DateTime SubmittedAt { get; set; }
+    public string? IpAddress { get; set; }
+    public string? UserAgent { get; set; }
+    public Guid? UserId { get; set; }
+    public string? SubmitterEmail { get; set; }
+    public bool IsReviewed { get; set; }
+    public DateTime? ReviewedAt { get; set; }
+    public string? ReviewNotes { get; set; }
+}
+
+public class SubmissionListResponse
+{
+    public required List<SubmissionResponse> Submissions { get; set; }
+    public int TotalCount { get; set; }
+    public int Page { get; set; }
+    public int PageSize { get; set; }
+    public int TotalPages { get; set; }
+}
+
+public class ReviewSubmissionRequest
+{
+    public string? ReviewNotes { get; set; }
 }

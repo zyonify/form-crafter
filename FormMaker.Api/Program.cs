@@ -44,6 +44,9 @@ builder.Services.AddScoped<TemplateService>();
 // Register Form Service
 builder.Services.AddScoped<FormService>();
 
+// Register Submission Service
+builder.Services.AddScoped<SubmissionService>();
+
 builder.Services
     .AddApplicationInsightsTelemetryWorkerService()
     .ConfigureFunctionsApplicationInsights();
