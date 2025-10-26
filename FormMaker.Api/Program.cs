@@ -8,13 +8,20 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 var builder = FunctionsApplication.CreateBuilder(args);
 
 builder.ConfigureFunctionsWebApplication();
 
 // Add CORS middleware
-builder.Services.AddSingleton<IFunctionsWorkerMiddleware, CorsMiddleware>();
+builder.Services.AddScoped<CorsMiddleware>();
+builder.Services.AddSingleton<IFunctionsWorkerMiddleware>(sp =>
+{
+    var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+    var logger = loggerFactory.CreateLogger<CorsMiddleware>();
+    return new CorsMiddleware(logger);
+});
 
 // Add DbContext with SQLite for local development
 var connectionString = builder.Configuration.GetValue<string>("Values:ConnectionStrings:FormMakerDb")

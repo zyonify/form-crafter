@@ -8,5 +8,18 @@
             },
             "enableLiveMetricsFilters": true
         }
+    },
+    "extensions": {
+        "http": {
+            "routePrefix": "api"
+        }
+    },
+    "cors": {
+        "allowedOrigins": [
+            "https://zyonify.github.io",
+            "http://localhost:5000",
+            "http://localhost:5001"
+        ],
+        "supportCredentials": true
     }
 }
