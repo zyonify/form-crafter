@@ -115,6 +115,17 @@ public class ApiService
     }
 
     /// <summary>
+    /// Makes a GET request without authentication (for public forms)
+    /// </summary>
+    public async Task<T?> GetUnauthenticatedAsync<T>(string endpoint)
+    {
+        var response = await _httpClient.GetAsync(endpoint);
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content.ReadFromJsonAsync<T>();
+    }
+
+    /// <summary>
     /// Adds the authentication header to the request
     /// </summary>
     private async Task AddAuthHeaderAsync(HttpRequestMessage request)
@@ -124,6 +135,56 @@ public class ApiService
         {
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }
+    }
+
+    // Form Sharing API Methods
+
+    /// <summary>
+    /// Create a shareable form from a template
+    /// </summary>
+    public async Task<FormResponse?> CreateFormAsync(CreateFormRequest request)
+    {
+        return await PostAsync<CreateFormRequest, FormResponse>("forms", request);
+    }
+
+    /// <summary>
+    /// Get a public form by share link (no auth required)
+    /// </summary>
+    public async Task<PublicFormResponse?> GetFormByShareLinkAsync(string shareLink)
+    {
+        return await GetUnauthenticatedAsync<PublicFormResponse>($"forms/public/{shareLink}");
+    }
+
+    /// <summary>
+    /// Get all forms for a specific template
+    /// </summary>
+    public async Task<FormListResponse?> GetFormsByTemplateAsync(Guid templateId)
+    {
+        return await GetAsync<FormListResponse>($"forms/template/{templateId}");
+    }
+
+    /// <summary>
+    /// Get a specific form by ID
+    /// </summary>
+    public async Task<FormResponse?> GetFormByIdAsync(Guid formId)
+    {
+        return await GetAsync<FormResponse>($"forms/{formId}");
+    }
+
+    /// <summary>
+    /// Update form settings
+    /// </summary>
+    public async Task<FormResponse?> UpdateFormAsync(Guid formId, UpdateFormRequest request)
+    {
+        return await PutAsync<UpdateFormRequest, FormResponse>($"forms/{formId}", request);
+    }
+
+    /// <summary>
+    /// Delete a form (soft delete)
+    /// </summary>
+    public async Task<bool> DeleteFormAsync(Guid formId)
+    {
+        return await DeleteAsync($"forms/{formId}");
     }
 }
 
@@ -205,4 +266,59 @@ public class ErrorResponse
 {
     public required string Error { get; set; }
     public string? Details { get; set; }
+}
+
+// Form Sharing Models
+
+public class CreateFormRequest
+{
+    public required Guid TemplateId { get; set; }
+    public required string Title { get; set; }
+    public string? Description { get; set; }
+    public bool RequireAuth { get; set; } = false;
+    public int? MaxSubmissions { get; set; }
+    public DateTime? ExpiresAt { get; set; }
+}
+
+public class UpdateFormRequest
+{
+    public string? Title { get; set; }
+    public string? Description { get; set; }
+    public bool? IsActive { get; set; }
+    public bool? IsPublic { get; set; }
+    public int? MaxSubmissions { get; set; }
+    public DateTime? ExpiresAt { get; set; }
+}
+
+public class FormResponse
+{
+    public Guid Id { get; set; }
+    public Guid TemplateId { get; set; }
+    public required string ShareLink { get; set; }
+    public required string Title { get; set; }
+    public string? Description { get; set; }
+    public bool IsPublic { get; set; }
+    public bool IsActive { get; set; }
+    public int? MaxSubmissions { get; set; }
+    public int SubmissionCount { get; set; }
+    public bool RequireAuth { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? ExpiresAt { get; set; }
+    public int ViewCount { get; set; }
+    public DateTime? LastAccessedAt { get; set; }
+}
+
+public class PublicFormResponse
+{
+    public Guid Id { get; set; }
+    public required string Title { get; set; }
+    public string? Description { get; set; }
+    public required string TemplateJsonData { get; set; }
+    public bool RequireAuth { get; set; }
+}
+
+public class FormListResponse
+{
+    public required List<FormResponse> Forms { get; set; }
+    public int TotalCount { get; set; }
 }

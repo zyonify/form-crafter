@@ -101,6 +101,12 @@
                                 Open
                             </MudButton>
 
+                            <MudButton StartIcon="@Icons.Material.Filled.Share"
+                                       Color="Color.Secondary"
+                                       OnClick="() => ShareForm(form.Id)">
+                                Share
+                            </MudButton>
+
                             <MudButton StartIcon="@Icons.Material.Filled.ContentCopy"
                                        Color="Color.Default"
                                        OnClick="() => DuplicateForm(form.Id)">
@@ -140,6 +146,9 @@
     [Inject]
     private IDialogService DialogService { get; set; } = default!;
 
+    [Inject]
+    private ApiService ApiService { get; set; } = default!;
+
     protected override async Task OnInitializedAsync()
     {
         await LoadForms();
@@ -166,6 +175,39 @@
     private void OpenForm(Guid formId)
     {
         Navigation.NavigateTo($"/editor?id={formId}");
+    }
+
+    private async Task ShareForm(Guid formId)
+    {
+        try
+        {
+            // Load the form template
+            var template = await LocalStorage.LoadFormAsync(formId);
+            if (template == null)
+            {
+                Snackbar.Add("Form not found", Severity.Error);
+                return;
+            }
+
+            // Open share dialog
+            var parameters = new DialogParameters
+            {
+                ["Template"] = template
+            };
+
+            var options = new DialogOptions
+            {
+                MaxWidth = MaxWidth.Small,
+                CloseButton = true,
+                CloseOnEscapeKey = true
+            };
+
+            await DialogService.ShowAsync<ShareFormDialog>("Share Form", parameters, options);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error sharing form: {ex.Message}", Severity.Error);
+        }
     }
 
     private async Task DuplicateForm(Guid formId)
