@@ -1,7 +1,9 @@
 using FormMaker.Api.Data;
+using FormMaker.Api.Middleware;
 using FormMaker.Api.Services;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Builder;
+using Microsoft.Azure.Functions.Worker.Middleware;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,6 +12,9 @@ using Microsoft.Extensions.Hosting;
 var builder = FunctionsApplication.CreateBuilder(args);
 
 builder.ConfigureFunctionsWebApplication();
+
+// Add CORS middleware
+builder.Services.AddSingleton<IFunctionsWorkerMiddleware, CorsMiddleware>();
 
 // Add DbContext with SQLite for local development
 var connectionString = builder.Configuration.GetValue<string>("Values:ConnectionStrings:FormMakerDb")
