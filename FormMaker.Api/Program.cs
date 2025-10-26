@@ -41,6 +41,9 @@ builder.Services.AddScoped<AuthService>();
 // Register Template Service
 builder.Services.AddScoped<TemplateService>();
 
+// Register Form Service
+builder.Services.AddScoped<FormService>();
+
 builder.Services
     .AddApplicationInsightsTelemetryWorkerService()
     .ConfigureFunctionsApplicationInsights();
