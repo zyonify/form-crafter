@@ -32,33 +32,30 @@
   - ~~Applied to ALL responses (success and error) in all Template endpoints~~
   - ~~Committed: efd4d88 - Deployed to Render~~
 
+- ~~**Step 4:** Update Forms.razor to use API~~
+  - ~~File: `FormMaker.Client/Pages/Forms.razor` (line 162)~~
+  - ~~Changed: Load from API GET /api/templates instead of localStorage~~
+  - ~~Committed: 549120e~~
+
+- ~~**Step 5-8:** Update Forms.razor CRUD operations~~
+  - ~~Duplicate: API GET + POST to create copy~~
+  - ~~Delete: API DELETE /api/templates/{id}~~
+  - ~~Share: Load from API and parse JsonData~~
+  - ~~Committed: 549120e~~
+
 ### 🚧 In Progress
 
 ### ⏳ Pending
-- [ ] **Step 4:** Update Forms.razor to use API
-  - File: `FormMaker.Client/Pages/Forms.razor` (line 162)
-  - Change: `forms = await LocalStorage.GetAllFormsAsync();`
-  - To: `forms = await ApiService.GetAsync<TemplateListResponse>("templates");`
-  - Add loading/error states with try-catch
-
-- [ ] **Step 5:** Update Editor.razor to save to API
+- [ ] **Step 9:** Update Editor.razor to save to API
   - File: `FormMaker.Client/Pages/Editor.razor` (lines 1315, 1332)
   - Change: `await LocalStorage.SaveFormAsync(currentTemplate);`
   - To: Check if template.Id exists → PUT else POST to API
   - Method: `await ApiService.PostAsync<CreateTemplateRequest, TemplateResponse>("templates", request);`
 
-- [ ] **Step 6:** Update Editor.razor to load from API
+- [ ] **Step 10:** Update Editor.razor to load from API
   - File: `FormMaker.Client/Pages/Editor.razor`
   - Method: `LoadForm()` - load from API instead of localStorage
   - Handle query parameter `?id={guid}`
-
-- [ ] **Step 7:** Update duplicate functionality
-  - File: `FormMaker.Client/Pages/Forms.razor` (line 217)
-  - POST duplicated form to API instead of localStorage
-
-- [ ] **Step 8:** Update delete functionality
-  - File: `FormMaker.Client/Pages/Forms.razor` (line 272)
-  - DELETE from API instead of localStorage
 
 - [ ] **Step 9:** Test the migration
   - Register new account
