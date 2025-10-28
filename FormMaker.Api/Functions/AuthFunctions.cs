@@ -81,7 +81,6 @@ public class AuthFunctions
 
             // Return success response
             var response = req.CreateResponse(HttpStatusCode.Created);
-            AddCorsHeaders(response, req);
             await response.WriteAsJsonAsync(new AuthResponse
             {
                 Token = result.Token!,
@@ -94,6 +93,7 @@ public class AuthFunctions
                     CreatedAt = result.User.CreatedAt
                 }
             });
+            AddCorsHeaders(response, req);
 
             return response;
         }
@@ -151,7 +151,6 @@ public class AuthFunctions
 
             // Return success response
             var response = req.CreateResponse(HttpStatusCode.OK);
-            AddCorsHeaders(response, req);
             await response.WriteAsJsonAsync(new AuthResponse
             {
                 Token = result.Token!,
@@ -164,6 +163,7 @@ public class AuthFunctions
                     CreatedAt = result.User.CreatedAt
                 }
             });
+            AddCorsHeaders(response, req);
 
             return response;
         }
@@ -206,7 +206,6 @@ public class AuthFunctions
 
             // Return user info
             var response = req.CreateResponse(HttpStatusCode.OK);
-            AddCorsHeaders(response, req);
             await response.WriteAsJsonAsync(new UserDto
             {
                 Id = user.Id,
@@ -215,6 +214,7 @@ public class AuthFunctions
                 EmailVerified = user.EmailVerified,
                 CreatedAt = user.CreatedAt
             });
+            AddCorsHeaders(response, req);
 
             return response;
         }
@@ -233,11 +233,11 @@ public class AuthFunctions
         string errorMessage)
     {
         var response = req.CreateResponse(statusCode);
-        AddCorsHeaders(response, req);
         await response.WriteAsJsonAsync(new ErrorResponse
         {
             Error = errorMessage
         });
+        AddCorsHeaders(response, req);
         return response;
     }
 
@@ -248,20 +248,26 @@ public class AuthFunctions
             ? origins.FirstOrDefault()
             : null;
 
-        // Set CORS headers
+        // Set CORS headers - use TryAdd to avoid exceptions if headers exist
         if (!string.IsNullOrEmpty(origin))
         {
-            response.Headers.Add("Access-Control-Allow-Origin", origin);
-            response.Headers.Add("Access-Control-Allow-Credentials", "true");
+            if (!response.Headers.Contains("Access-Control-Allow-Origin"))
+                response.Headers.Add("Access-Control-Allow-Origin", origin);
+            if (!response.Headers.Contains("Access-Control-Allow-Credentials"))
+                response.Headers.Add("Access-Control-Allow-Credentials", "true");
         }
         else
         {
-            response.Headers.Add("Access-Control-Allow-Origin", "*");
+            if (!response.Headers.Contains("Access-Control-Allow-Origin"))
+                response.Headers.Add("Access-Control-Allow-Origin", "*");
         }
 
-        response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-        response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept");
-        response.Headers.Add("Access-Control-Max-Age", "86400");
+        if (!response.Headers.Contains("Access-Control-Allow-Methods"))
+            response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        if (!response.Headers.Contains("Access-Control-Allow-Headers"))
+            response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept");
+        if (!response.Headers.Contains("Access-Control-Max-Age"))
+            response.Headers.Add("Access-Control-Max-Age", "86400");
     }
 
     private static string? ExtractBearerToken(HttpRequestData req)
