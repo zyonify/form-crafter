@@ -79,18 +79,20 @@
                                 </MudText>
                             }
 
-                            <MudText Typo="Typo.body2" Style="margin-bottom: 4px;">
-                                <MudIcon Icon="@Icons.Material.Filled.Widgets" Size="Size.Small" />
-                                @form.ElementCount elements
-                            </MudText>
-
-                            <MudText Typo="Typo.body2" Style="margin-bottom: 4px;">
-                                <MudIcon Icon="@Icons.Material.Filled.AspectRatio" Size="Size.Small" />
-                                @form.PageSize
-                            </MudText>
+                            @if (!string.IsNullOrEmpty(form.Category))
+                            {
+                                <MudText Typo="Typo.body2" Style="margin-bottom: 4px;">
+                                    <MudIcon Icon="@Icons.Material.Filled.Category" Size="Size.Small" />
+                                    @form.Category
+                                </MudText>
+                            }
 
                             <MudText Typo="Typo.caption" Color="Color.Secondary" Style="margin-top: 8px;">
                                 Updated @GetRelativeTime(form.UpdatedAt)
+                            </MudText>
+
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                Created @GetRelativeTime(form.CreatedAt)
                             </MudText>
                         </MudCardContent>
 
@@ -131,7 +133,7 @@
 
 
 @code {
-    private List<FormMetadata>? forms;
+    private List<FormMaker.Shared.Models.TemplateResponse>? forms;
     private bool isLoading = true;
 
     [Inject]
@@ -159,12 +161,19 @@
         isLoading = true;
         try
         {
-            forms = await LocalStorage.GetAllFormsAsync();
+            // Load from API instead of localStorage
+            var response = await ApiService.GetAsync<FormMaker.Shared.Models.TemplateListResponse>("templates");
+            forms = response?.Templates ?? new List<FormMaker.Shared.Models.TemplateResponse>();
+        }
+        catch (HttpRequestException ex)
+        {
+            Snackbar.Add($"Error loading forms from server: {ex.Message}", Severity.Error);
+            forms = new List<FormMaker.Shared.Models.TemplateResponse>();
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Error loading forms: {ex.Message}", Severity.Error);
-            forms = new List<FormMetadata>();
+            forms = new List<FormMaker.Shared.Models.TemplateResponse>();
         }
         finally
         {
@@ -181,11 +190,19 @@
     {
         try
         {
-            // Load the form template
-            var template = await LocalStorage.LoadFormAsync(formId);
-            if (template == null)
+            // Load the form template from API
+            var templateResponse = await ApiService.GetAsync<FormMaker.Shared.Models.TemplateResponse>($"templates/{formId}");
+            if (templateResponse == null)
             {
                 Snackbar.Add("Form not found", Severity.Error);
+                return;
+            }
+
+            // Parse the JsonData to get FormTemplate
+            var template = System.Text.Json.JsonSerializer.Deserialize<FormMaker.Shared.Models.FormTemplate>(templateResponse.JsonData);
+            if (template == null)
+            {
+                Snackbar.Add("Error parsing form data", Severity.Error);
                 return;
             }
 
@@ -214,16 +231,23 @@
     {
         try
         {
-            var originalForm = await LocalStorage.LoadFormAsync(formId);
-            if (originalForm != null)
+            // Get the original template from API
+            var originalTemplate = await ApiService.GetAsync<FormMaker.Shared.Models.TemplateResponse>($"templates/{formId}");
+            if (originalTemplate != null)
             {
-                // Create a copy with a new ID and name
-                originalForm.Id = Guid.NewGuid();
-                originalForm.Name = $"{originalForm.Name} (Copy)";
-                originalForm.CreatedAt = DateTime.UtcNow;
-                originalForm.UpdatedAt = DateTime.UtcNow;
+                // Create a new template request with copied data
+                var duplicateRequest = new FormMaker.Shared.Models.CreateTemplateRequest
+                {
+                    Name = $"{originalTemplate.Name} (Copy)",
+                    Description = originalTemplate.Description,
+                    JsonData = originalTemplate.JsonData,
+                    Category = originalTemplate.Category,
+                    Tags = originalTemplate.Tags,
+                    IsPublic = false
+                };
 
-                await LocalStorage.SaveFormAsync(originalForm);
+                // POST to API to create duplicate
+                await ApiService.PostAsync<FormMaker.Shared.Models.CreateTemplateRequest, FormMaker.Shared.Models.TemplateResponse>("templates", duplicateRequest);
                 Snackbar.Add("Form duplicated successfully!", Severity.Success);
 
                 // Reload the forms list
@@ -269,9 +293,17 @@
 
         try
         {
-            await LocalStorage.DeleteFormAsync(formId);
-            Snackbar.Add($"'{formName}' deleted", Severity.Info);
-            await LoadForms();
+            // DELETE from API
+            var success = await ApiService.DeleteAsync($"templates/{formId}");
+            if (success)
+            {
+                Snackbar.Add($"'{formName}' deleted", Severity.Info);
+                await LoadForms();
+            }
+            else
+            {
+                Snackbar.Add($"Failed to delete '{formName}'", Severity.Error);
+            }
         }
         catch (Exception ex)
         {
