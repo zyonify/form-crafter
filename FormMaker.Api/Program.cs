@@ -14,14 +14,8 @@ var builder = FunctionsApplication.CreateBuilder(args);
 
 builder.ConfigureFunctionsWebApplication();
 
-// Add CORS middleware
-builder.Services.AddScoped<CorsMiddleware>();
-builder.Services.AddSingleton<IFunctionsWorkerMiddleware>(sp =>
-{
-    var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
-    var logger = loggerFactory.CreateLogger<CorsMiddleware>();
-    return new CorsMiddleware(logger);
-});
+// Register CORS middleware
+builder.Services.AddSingleton<IFunctionsWorkerMiddleware, CorsMiddleware>();
 
 // Add DbContext with SQLite for local development
 var connectionString = builder.Configuration.GetValue<string>("Values:ConnectionStrings:FormMakerDb")

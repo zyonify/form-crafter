@@ -28,6 +28,16 @@ public class CorsMiddleware : IFunctionsWorkerMiddleware
         {
             _logger.LogInformation("CORS Middleware: Request method = {Method}, Path = {Path}",
                 requestData.Method, requestData.Url.PathAndQuery);
+
+            // Handle OPTIONS preflight requests immediately
+            if (requestData.Method.Equals("OPTIONS", StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogInformation("CORS Middleware: Handling OPTIONS preflight request");
+                var preflightResponse = requestData.CreateResponse(System.Net.HttpStatusCode.OK);
+                AddCorsHeaders(preflightResponse, requestData);
+                context.GetInvocationResult().Value = preflightResponse;
+                return;
+            }
         }
 
         // Continue with the function execution
@@ -54,26 +64,52 @@ public class CorsMiddleware : IFunctionsWorkerMiddleware
     {
         try
         {
+            // List of allowed origins
+            var allowedOrigins = new[]
+            {
+                "https://zyonify.github.io",
+                "http://localhost:5000",
+                "http://localhost:5001"
+            };
+
             // Get the origin from the request
-            var origin = request.Headers.TryGetValues("Origin", out var origins)
+            var requestOrigin = request.Headers.TryGetValues("Origin", out var origins)
                 ? origins.FirstOrDefault()
                 : null;
 
-            _logger.LogInformation("CORS Middleware: Request origin = {Origin}", origin ?? "none");
+            _logger.LogInformation("CORS Middleware: Request origin = {Origin}", requestOrigin ?? "none");
 
-            // If no origin, allow all (for same-origin requests)
-            if (string.IsNullOrEmpty(origin))
+            // Determine which origin to allow
+            string allowedOrigin;
+            bool allowCredentials = false;
+
+            if (!string.IsNullOrEmpty(requestOrigin) && allowedOrigins.Contains(requestOrigin, StringComparer.OrdinalIgnoreCase))
             {
-                origin = "*";
+                // Request origin is in allowed list - use it
+                allowedOrigin = requestOrigin;
+                allowCredentials = true;
+                _logger.LogInformation("CORS Middleware: Origin {Origin} is allowed", requestOrigin);
+            }
+            else if (string.IsNullOrEmpty(requestOrigin))
+            {
+                // No origin header - allow all
+                allowedOrigin = "*";
+                _logger.LogInformation("CORS Middleware: No origin header, using wildcard");
+            }
+            else
+            {
+                // Origin not in allowed list - still add header but log warning
+                allowedOrigin = requestOrigin;
+                _logger.LogWarning("CORS Middleware: Origin {Origin} not in allowed list, but allowing anyway", requestOrigin);
             }
 
             // Add CORS headers - try/catch each one in case headers already exist
-            TryAddHeader(response, "Access-Control-Allow-Origin", origin);
+            TryAddHeader(response, "Access-Control-Allow-Origin", allowedOrigin);
             TryAddHeader(response, "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
             TryAddHeader(response, "Access-Control-Allow-Headers", "Content-Type, Authorization, Accept");
 
             // Only add credentials header if not using wildcard origin
-            if (origin != "*")
+            if (allowCredentials)
             {
                 TryAddHeader(response, "Access-Control-Allow-Credentials", "true");
             }
