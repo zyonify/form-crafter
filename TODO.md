@@ -3,7 +3,80 @@
 **Project:** Drag & Drop Form Builder for Business/Legal Documents
 **Stack:** Blazor WASM + ASP.NET Core API + Azure Static Web Apps
 **Target Users:** Elderly/Non-technical users
-**Last Updated:** 2025-10-16 (Phase 1 Complete!)
+**Last Updated:** 2025-10-28 (Migration to API in progress)
+
+---
+
+## 🔥 PRIORITY #1: MIGRATE FROM LOCALSTORAGE TO API (2025-10-28)
+
+**CRITICAL:** Forms are currently saved to localStorage (browser-specific, not synced). Need to migrate to database API.
+
+### ✅ Completed
+- ~~**Step 1:** API Backend Setup~~
+  - ~~File: `FormMaker.Api/` - Already deployed to Render.com~~
+  - ~~Database: SQLite with EF Core migrations~~
+  - ~~Authentication: JWT tokens, register/login working~~
+  - ~~Deployment: https://form-crafter.onrender.com/api/~~
+
+- ~~**Step 2:** Template CRUD Endpoints~~
+  - ~~File: `FormMaker.Api/Functions/TemplateFunctions.cs`~~
+  - ~~POST /api/templates - Create template (requires auth)~~
+  - ~~GET /api/templates - Get user's templates (requires auth)~~
+  - ~~GET /api/templates/{id} - Get single template (requires auth)~~
+  - ~~PUT /api/templates/{id} - Update template (requires auth)~~
+  - ~~DELETE /api/templates/{id} - Delete template (requires auth)~~
+
+- ~~**Step 3:** Add CORS headers to Template endpoints~~
+  - ~~File: `FormMaker.Api/Functions/TemplateFunctions.cs`~~
+  - ~~Method: Added `AddCorsHeaders()` helper and OPTIONS handler~~
+  - ~~Applied to ALL responses (success and error) in all Template endpoints~~
+  - ~~Committed: efd4d88 - Deployed to Render~~
+
+### 🚧 In Progress
+
+### ⏳ Pending
+- [ ] **Step 4:** Update Forms.razor to use API
+  - File: `FormMaker.Client/Pages/Forms.razor` (line 162)
+  - Change: `forms = await LocalStorage.GetAllFormsAsync();`
+  - To: `forms = await ApiService.GetAsync<TemplateListResponse>("templates");`
+  - Add loading/error states with try-catch
+
+- [ ] **Step 5:** Update Editor.razor to save to API
+  - File: `FormMaker.Client/Pages/Editor.razor` (lines 1315, 1332)
+  - Change: `await LocalStorage.SaveFormAsync(currentTemplate);`
+  - To: Check if template.Id exists → PUT else POST to API
+  - Method: `await ApiService.PostAsync<CreateTemplateRequest, TemplateResponse>("templates", request);`
+
+- [ ] **Step 6:** Update Editor.razor to load from API
+  - File: `FormMaker.Client/Pages/Editor.razor`
+  - Method: `LoadForm()` - load from API instead of localStorage
+  - Handle query parameter `?id={guid}`
+
+- [ ] **Step 7:** Update duplicate functionality
+  - File: `FormMaker.Client/Pages/Forms.razor` (line 217)
+  - POST duplicated form to API instead of localStorage
+
+- [ ] **Step 8:** Update delete functionality
+  - File: `FormMaker.Client/Pages/Forms.razor` (line 272)
+  - DELETE from API instead of localStorage
+
+- [ ] **Step 9:** Test the migration
+  - Register new account
+  - Create form and save → verify in database
+  - Login from incognito → verify forms load
+  - Test duplicate, delete, edit operations
+
+- [ ] **Step 10:** Add localStorage migration utility (optional)
+  - Create migration page to move existing localStorage forms to API
+  - Button: "Sync Local Forms to Cloud"
+  - Iterate localStorage forms and POST to API
+
+### 📝 Implementation Notes
+- **CORS Issue:** Template endpoints need same CORS fix as Auth endpoints
+- **Authentication:** All API calls need JWT token from localStorage ('authToken')
+- **Error Handling:** Show user-friendly errors with Snackbar
+- **Loading States:** Show MudProgressCircular during API calls
+- **Backward Compatibility:** Keep localStorage as fallback if API fails (optional)
 
 ---
 
