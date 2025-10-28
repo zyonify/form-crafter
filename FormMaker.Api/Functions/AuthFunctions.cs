@@ -196,6 +196,63 @@ public class AuthFunctions
     }
 
     /// <summary>
+    /// GET /api/auth/users - Get all users (for debugging/admin)
+    /// </summary>
+    [Function("GetAllUsers")]
+    public async Task<HttpResponseData> GetAllUsers(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "auth/users")] HttpRequestData req)
+    {
+        _logger.LogInformation("GetAllUsers endpoint called");
+
+        try
+        {
+            // Extract token from Authorization header
+            var token = ExtractBearerToken(req);
+            if (string.IsNullOrEmpty(token))
+            {
+                return await CreateErrorResponse(req, HttpStatusCode.Unauthorized, "No authorization token provided");
+            }
+
+            // Verify user is authenticated
+            var currentUser = await _authService.GetUserFromTokenAsync(token);
+            if (currentUser == null)
+            {
+                return await CreateErrorResponse(req, HttpStatusCode.Unauthorized, "Invalid or expired token");
+            }
+
+            // Get all users
+            var users = await _authService.GetAllUsersAsync();
+
+            // Return user list
+            var response = req.CreateResponse(HttpStatusCode.OK);
+
+            // Add CORS headers BEFORE writing content
+            AddCorsHeaders(response, req);
+            response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+
+            // Manually serialize and write
+            var userDtos = users.Select(u => new UserDto
+            {
+                Id = u.Id,
+                Email = u.Email,
+                DisplayName = u.DisplayName,
+                EmailVerified = u.EmailVerified,
+                CreatedAt = u.CreatedAt
+            }).ToList();
+
+            var json = JsonSerializer.Serialize(userDtos);
+            await response.WriteStringAsync(json);
+
+            return response;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting all users");
+            return await CreateErrorResponse(req, HttpStatusCode.InternalServerError, "An error occurred");
+        }
+    }
+
+    /// <summary>
     /// GET /api/auth/me - Get current user info from token
     /// </summary>
     [Function("GetMe")]

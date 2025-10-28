@@ -133,6 +133,14 @@ public class AuthService
 
         return await GetUserByIdAsync(userId.Value);
     }
+
+    /// <summary>
+    /// Gets all users (for admin/debugging)
+    /// </summary>
+    public async Task<List<User>> GetAllUsersAsync()
+    {
+        return await _dbContext.Users.ToListAsync();
+    }
 }
 
 /// <summary>
