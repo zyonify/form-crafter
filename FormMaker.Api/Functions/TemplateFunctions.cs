@@ -29,6 +29,19 @@ public class TemplateFunctions
     }
 
     /// <summary>
+    /// OPTIONS handler for CORS preflight
+    /// </summary>
+    [Function("TemplateOptions")]
+    public HttpResponseData HandleOptions(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "options", Route = "templates/{*path}")] HttpRequestData req)
+    {
+        _logger.LogInformation("Handling OPTIONS preflight request for templates");
+        var response = req.CreateResponse(HttpStatusCode.OK);
+        AddCorsHeaders(response, req);
+        return response;
+    }
+
+    /// <summary>
     /// POST /api/templates - Create a new template
     /// </summary>
     [Function("CreateTemplate")]
@@ -70,7 +83,16 @@ public class TemplateFunctions
 
             // Return response
             var response = req.CreateResponse(HttpStatusCode.Created);
-            await response.WriteAsJsonAsync(MapToResponse(template));
+
+            // Add CORS headers BEFORE writing content
+            AddCorsHeaders(response, req);
+            response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+
+            // Manually serialize and write
+            var templateResponse = MapToResponse(template);
+            var json = JsonSerializer.Serialize(templateResponse);
+            await response.WriteStringAsync(json);
+
             return response;
         }
         catch (JsonException ex)
@@ -108,11 +130,20 @@ public class TemplateFunctions
 
             // Return response
             var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(new TemplateListResponse
+
+            // Add CORS headers BEFORE writing content
+            AddCorsHeaders(response, req);
+            response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+
+            // Manually serialize and write
+            var listResponse = new TemplateListResponse
             {
                 Templates = templates.Select(MapToResponse).ToList(),
                 TotalCount = templates.Count
-            });
+            };
+            var json = JsonSerializer.Serialize(listResponse);
+            await response.WriteStringAsync(json);
+
             return response;
         }
         catch (Exception ex)
@@ -153,7 +184,16 @@ public class TemplateFunctions
 
             // Return response
             var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(MapToResponse(template));
+
+            // Add CORS headers BEFORE writing content
+            AddCorsHeaders(response, req);
+            response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+
+            // Manually serialize and write
+            var templateResponse = MapToResponse(template);
+            var json = JsonSerializer.Serialize(templateResponse);
+            await response.WriteStringAsync(json);
+
             return response;
         }
         catch (Exception ex)
@@ -206,7 +246,16 @@ public class TemplateFunctions
 
             // Return response
             var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(MapToResponse(template));
+
+            // Add CORS headers BEFORE writing content
+            AddCorsHeaders(response, req);
+            response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+
+            // Manually serialize and write
+            var templateResponse = MapToResponse(template);
+            var json = JsonSerializer.Serialize(templateResponse);
+            await response.WriteStringAsync(json);
+
             return response;
         }
         catch (JsonException ex)
@@ -256,6 +305,7 @@ public class TemplateFunctions
 
             // Return success response
             var response = req.CreateResponse(HttpStatusCode.NoContent);
+            AddCorsHeaders(response, req);
             return response;
         }
         catch (Exception ex)
@@ -300,11 +350,46 @@ public class TemplateFunctions
         string errorMessage)
     {
         var response = req.CreateResponse(statusCode);
-        await response.WriteAsJsonAsync(new ErrorResponse
-        {
-            Error = errorMessage
-        });
+
+        // Add CORS headers BEFORE writing content
+        AddCorsHeaders(response, req);
+        response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+
+        // Manually serialize and write
+        var errorResponse = new ErrorResponse { Error = errorMessage };
+        var json = JsonSerializer.Serialize(errorResponse);
+        await response.WriteStringAsync(json);
+
         return response;
+    }
+
+    private static void AddCorsHeaders(HttpResponseData response, HttpRequestData request)
+    {
+        // Get origin from request
+        var origin = request.Headers.TryGetValues("Origin", out var origins)
+            ? origins.FirstOrDefault()
+            : null;
+
+        // Set CORS headers - use TryAdd to avoid exceptions if headers exist
+        if (!string.IsNullOrEmpty(origin))
+        {
+            if (!response.Headers.Contains("Access-Control-Allow-Origin"))
+                response.Headers.Add("Access-Control-Allow-Origin", origin);
+            if (!response.Headers.Contains("Access-Control-Allow-Credentials"))
+                response.Headers.Add("Access-Control-Allow-Credentials", "true");
+        }
+        else
+        {
+            if (!response.Headers.Contains("Access-Control-Allow-Origin"))
+                response.Headers.Add("Access-Control-Allow-Origin", "*");
+        }
+
+        if (!response.Headers.Contains("Access-Control-Allow-Methods"))
+            response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        if (!response.Headers.Contains("Access-Control-Allow-Headers"))
+            response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept");
+        if (!response.Headers.Contains("Access-Control-Max-Age"))
+            response.Headers.Add("Access-Control-Max-Age", "86400");
     }
 
     private static TemplateResponse MapToResponse(Template template)
