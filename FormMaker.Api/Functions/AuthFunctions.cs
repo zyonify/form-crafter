@@ -81,7 +81,13 @@ public class AuthFunctions
 
             // Return success response
             var response = req.CreateResponse(HttpStatusCode.Created);
-            await response.WriteAsJsonAsync(new AuthResponse
+
+            // Add CORS headers BEFORE writing content
+            AddCorsHeaders(response, req);
+            response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+
+            // Manually serialize and write
+            var authResponse = new AuthResponse
             {
                 Token = result.Token!,
                 User = new UserDto
@@ -92,8 +98,10 @@ public class AuthFunctions
                     EmailVerified = result.User.EmailVerified,
                     CreatedAt = result.User.CreatedAt
                 }
-            });
-            AddCorsHeaders(response, req);
+            };
+
+            var json = JsonSerializer.Serialize(authResponse);
+            await response.WriteStringAsync(json);
 
             return response;
         }
@@ -151,7 +159,13 @@ public class AuthFunctions
 
             // Return success response
             var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(new AuthResponse
+
+            // Add CORS headers BEFORE writing content
+            AddCorsHeaders(response, req);
+            response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+
+            // Manually serialize and write
+            var authResponse = new AuthResponse
             {
                 Token = result.Token!,
                 User = new UserDto
@@ -162,8 +176,10 @@ public class AuthFunctions
                     EmailVerified = result.User.EmailVerified,
                     CreatedAt = result.User.CreatedAt
                 }
-            });
-            AddCorsHeaders(response, req);
+            };
+
+            var json = JsonSerializer.Serialize(authResponse);
+            await response.WriteStringAsync(json);
 
             return response;
         }
@@ -206,15 +222,23 @@ public class AuthFunctions
 
             // Return user info
             var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(new UserDto
+
+            // Add CORS headers BEFORE writing content
+            AddCorsHeaders(response, req);
+            response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+
+            // Manually serialize and write
+            var userDto = new UserDto
             {
                 Id = user.Id,
                 Email = user.Email,
                 DisplayName = user.DisplayName,
                 EmailVerified = user.EmailVerified,
                 CreatedAt = user.CreatedAt
-            });
-            AddCorsHeaders(response, req);
+            };
+
+            var json = JsonSerializer.Serialize(userDto);
+            await response.WriteStringAsync(json);
 
             return response;
         }
@@ -233,11 +257,16 @@ public class AuthFunctions
         string errorMessage)
     {
         var response = req.CreateResponse(statusCode);
-        await response.WriteAsJsonAsync(new ErrorResponse
-        {
-            Error = errorMessage
-        });
+
+        // Add CORS headers BEFORE writing content
         AddCorsHeaders(response, req);
+        response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+
+        // Manually serialize and write
+        var errorResponse = new ErrorResponse { Error = errorMessage };
+        var json = JsonSerializer.Serialize(errorResponse);
+        await response.WriteStringAsync(json);
+
         return response;
     }
 
