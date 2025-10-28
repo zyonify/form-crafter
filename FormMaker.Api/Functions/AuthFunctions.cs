@@ -23,6 +23,19 @@ public class AuthFunctions
     }
 
     /// <summary>
+    /// OPTIONS handler for CORS preflight
+    /// </summary>
+    [Function("AuthOptions")]
+    public HttpResponseData HandleOptions(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "options", Route = "auth/{*path}")] HttpRequestData req)
+    {
+        _logger.LogInformation("Handling OPTIONS preflight request for auth");
+        var response = req.CreateResponse(HttpStatusCode.OK);
+        AddCorsHeaders(response, req);
+        return response;
+    }
+
+    /// <summary>
     /// POST /api/auth/register - Register a new user
     /// </summary>
     [Function("Register")]
@@ -68,6 +81,7 @@ public class AuthFunctions
 
             // Return success response
             var response = req.CreateResponse(HttpStatusCode.Created);
+            AddCorsHeaders(response, req);
             await response.WriteAsJsonAsync(new AuthResponse
             {
                 Token = result.Token!,
@@ -137,6 +151,7 @@ public class AuthFunctions
 
             // Return success response
             var response = req.CreateResponse(HttpStatusCode.OK);
+            AddCorsHeaders(response, req);
             await response.WriteAsJsonAsync(new AuthResponse
             {
                 Token = result.Token!,
@@ -191,6 +206,7 @@ public class AuthFunctions
 
             // Return user info
             var response = req.CreateResponse(HttpStatusCode.OK);
+            AddCorsHeaders(response, req);
             await response.WriteAsJsonAsync(new UserDto
             {
                 Id = user.Id,
@@ -217,11 +233,35 @@ public class AuthFunctions
         string errorMessage)
     {
         var response = req.CreateResponse(statusCode);
+        AddCorsHeaders(response, req);
         await response.WriteAsJsonAsync(new ErrorResponse
         {
             Error = errorMessage
         });
         return response;
+    }
+
+    private static void AddCorsHeaders(HttpResponseData response, HttpRequestData request)
+    {
+        // Get origin from request
+        var origin = request.Headers.TryGetValues("Origin", out var origins)
+            ? origins.FirstOrDefault()
+            : null;
+
+        // Set CORS headers
+        if (!string.IsNullOrEmpty(origin))
+        {
+            response.Headers.Add("Access-Control-Allow-Origin", origin);
+            response.Headers.Add("Access-Control-Allow-Credentials", "true");
+        }
+        else
+        {
+            response.Headers.Add("Access-Control-Allow-Origin", "*");
+        }
+
+        response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept");
+        response.Headers.Add("Access-Control-Max-Age", "86400");
     }
 
     private static string? ExtractBearerToken(HttpRequestData req)
