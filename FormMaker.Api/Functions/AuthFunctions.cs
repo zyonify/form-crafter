@@ -43,10 +43,11 @@ public class AuthFunctions
             }
             _logger.LogInformation("Request body content: {Body}", bodyContent);
 
-            // Parse request body from the string
+            // Parse request body from the string (case-insensitive to handle camelCase from client)
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var request = string.IsNullOrWhiteSpace(bodyContent)
                 ? null
-                : JsonSerializer.Deserialize<RegisterRequest>(bodyContent);
+                : JsonSerializer.Deserialize<RegisterRequest>(bodyContent, options);
 
             if (request == null)
             {
@@ -115,10 +116,11 @@ public class AuthFunctions
             }
             _logger.LogInformation("Request body content: {Body}", bodyContent);
 
-            // Parse request body from the string
+            // Parse request body from the string (case-insensitive to handle camelCase from client)
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var request = string.IsNullOrWhiteSpace(bodyContent)
                 ? null
-                : JsonSerializer.Deserialize<LoginRequest>(bodyContent);
+                : JsonSerializer.Deserialize<LoginRequest>(bodyContent, options);
 
             if (request == null)
             {

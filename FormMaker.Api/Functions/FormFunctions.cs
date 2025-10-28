@@ -46,8 +46,9 @@ public class FormFunctions
                 return await CreateErrorResponse(req, HttpStatusCode.Unauthorized, "Authentication required");
             }
 
-            // Parse request body
-            var request = await JsonSerializer.DeserializeAsync<CreateFormRequest>(req.Body);
+            // Parse request body (case-insensitive to handle camelCase from client)
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var request = await JsonSerializer.DeserializeAsync<CreateFormRequest>(req.Body, options);
             if (request == null)
             {
                 return await CreateErrorResponse(req, HttpStatusCode.BadRequest, "Invalid request body");
@@ -244,8 +245,9 @@ public class FormFunctions
                 return await CreateErrorResponse(req, HttpStatusCode.BadRequest, "Invalid form ID");
             }
 
-            // Parse request body
-            var request = await JsonSerializer.DeserializeAsync<UpdateFormRequest>(req.Body);
+            // Parse request body (case-insensitive to handle camelCase from client)
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var request = await JsonSerializer.DeserializeAsync<UpdateFormRequest>(req.Body, options);
             if (request == null)
             {
                 return await CreateErrorResponse(req, HttpStatusCode.BadRequest, "Invalid request body");

@@ -51,8 +51,9 @@ public class SubmissionFunctions
                 return await CreateErrorResponse(req, HttpStatusCode.NotFound, "Form not found or expired");
             }
 
-            // Parse request body
-            var request = await JsonSerializer.DeserializeAsync<SubmitFormRequest>(req.Body);
+            // Parse request body (case-insensitive to handle camelCase from client)
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var request = await JsonSerializer.DeserializeAsync<SubmitFormRequest>(req.Body, options);
             if (request == null || string.IsNullOrWhiteSpace(request.JsonData))
             {
                 return await CreateErrorResponse(req, HttpStatusCode.BadRequest, "Form data is required");
@@ -234,8 +235,9 @@ public class SubmissionFunctions
                 return await CreateErrorResponse(req, HttpStatusCode.BadRequest, "Invalid submission ID");
             }
 
-            // Parse request body
-            var request = await JsonSerializer.DeserializeAsync<ReviewSubmissionRequest>(req.Body);
+            // Parse request body (case-insensitive to handle camelCase from client)
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var request = await JsonSerializer.DeserializeAsync<ReviewSubmissionRequest>(req.Body, options);
 
             // Mark as reviewed
             var submission = await _submissionService.MarkAsReviewedAsync(submissionGuid, request?.ReviewNotes);
