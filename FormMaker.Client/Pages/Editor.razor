@@ -86,6 +86,14 @@ else
             Save
         </MudButton>
 
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Success"
+                   StartIcon="@Icons.Material.Filled.Share"
+                   OnClick="OpenShareDialog"
+                   Size="Size.Large">
+            Share
+        </MudButton>
+
         <MudButton Variant="Variant.Outlined"
                    Color="Color.Primary"
                    StartIcon="@Icons.Material.Filled.Visibility"
@@ -1499,6 +1507,38 @@ else
         {
             Snackbar.Add($"Error exporting PDF: {ex.Message}", Severity.Error);
         }
+    }
+
+    // Share Form method
+    private async Task OpenShareDialog()
+    {
+        // Save form first if it hasn't been saved
+        if (currentTemplate.Id == Guid.Empty)
+        {
+            await SaveForm();
+
+            // If save failed (template still has empty ID), don't proceed
+            if (currentTemplate.Id == Guid.Empty)
+            {
+                Snackbar.Add("Please save the form before sharing", Severity.Warning);
+                return;
+            }
+        }
+
+        // Open share dialog
+        var parameters = new DialogParameters
+        {
+            { "Template", currentTemplate }
+        };
+
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            CloseOnEscapeKey = true
+        };
+
+        await DialogService.ShowAsync<ShareFormDialog>("Share Form", parameters, options);
     }
 
     // Zoom handler methods
