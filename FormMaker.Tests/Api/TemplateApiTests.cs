@@ -111,7 +111,7 @@ public class TemplateApiTests
         return request;
     }
 
-    [Fact]
+    [Fact(Skip = "Integration test - requires live API at Render.com")]
     public async Task Test01_RegisterAndLogin_ShouldReturnToken()
     {
         // Act
@@ -122,7 +122,7 @@ public class TemplateApiTests
         Assert.NotEmpty(token);
     }
 
-    [Fact]
+    [Fact(Skip = "Integration test - requires live API at Render.com")]
     public async Task Test02_CreateTemplate_ShouldReturnCreatedTemplate()
     {
         // Arrange
@@ -153,7 +153,7 @@ public class TemplateApiTests
         Assert.NotEqual(Guid.Empty, result.Id);
     }
 
-    [Fact]
+    [Fact(Skip = "Integration test - requires live API at Render.com")]
     public async Task Test03_GetAllTemplates_ShouldReturnList()
     {
         // Arrange
@@ -171,7 +171,7 @@ public class TemplateApiTests
         Assert.True(result.TotalCount >= 0);
     }
 
-    [Fact]
+    [Fact(Skip = "Integration test - requires live API at Render.com")]
     public async Task Test04_CreateAndGetTemplate_ShouldReturnSameData()
     {
         // Arrange - Create a template
@@ -202,7 +202,7 @@ public class TemplateApiTests
         Assert.Equal("Get Test Form", result.Name);
     }
 
-    [Fact]
+    [Fact(Skip = "Integration test - requires live API at Render.com")]
     public async Task Test05_CreateAndUpdateTemplate_ShouldUpdateSuccessfully()
     {
         // Arrange - Create a template
@@ -242,7 +242,7 @@ public class TemplateApiTests
         Assert.Equal("Updated", result.Category);
     }
 
-    [Fact]
+    [Fact(Skip = "Integration test - requires live API at Render.com")]
     public async Task Test06_CreateAndDeleteTemplate_ShouldDeleteSuccessfully()
     {
         // Arrange - Create a template
@@ -273,7 +273,7 @@ public class TemplateApiTests
         Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
     }
 
-    [Fact]
+    [Fact(Skip = "Integration test - requires live API at Render.com")]
     public async Task Test07_GetTemplates_WithoutAuth_ShouldReturn401()
     {
         // Arrange
@@ -287,7 +287,7 @@ public class TemplateApiTests
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    [Fact]
+    [Fact(Skip = "Integration test - requires live API at Render.com")]
     public async Task Test08_CreateTemplate_WithInvalidData_ShouldReturn400()
     {
         // Arrange
