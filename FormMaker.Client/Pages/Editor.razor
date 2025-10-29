@@ -4,6 +4,7 @@
 @using FormMaker.Client.Components
 @using Microsoft.JSInterop
 @using Microsoft.AspNetCore.Components.Forms
+@using System.Text.Json
 
 <PageTitle>Form Maker - Editor</PageTitle>
 
@@ -920,6 +921,9 @@ else
     [Inject]
     private FormMaker.Client.Services.PdfExportService PdfExportService { get; set; } = default!;
 
+    [Inject]
+    private FormMaker.Client.Services.ApiService ApiService { get; set; } = default!;
+
     [Parameter]
     [SupplyParameterFromQuery(Name = "id")]
     public string? FormId { get; set; }
@@ -958,14 +962,26 @@ else
     {
         try
         {
-            var loadedForm = await LocalStorage.LoadFormAsync(formId);
-            if (loadedForm != null)
+            // Load template from API
+            var response = await ApiService.GetAsync<FormMaker.Client.Services.TemplateResponse>($"templates/{formId}");
+
+            if (response != null)
             {
-                currentTemplate = loadedForm;
-                // Ensure multi-page mode is initialized after loading
-                currentTemplate.EnsureMultiPageInitialized();
-                hasUnsavedChanges = false;
-                Snackbar.Add($"'{currentTemplate.Name}' loaded successfully!", Severity.Success);
+                // Deserialize the JsonData to get the FormTemplate
+                var loadedForm = JsonSerializer.Deserialize<FormTemplate>(response.JsonData);
+
+                if (loadedForm != null)
+                {
+                    currentTemplate = loadedForm;
+                    // Ensure multi-page mode is initialized after loading
+                    currentTemplate.EnsureMultiPageInitialized();
+                    hasUnsavedChanges = false;
+                    Snackbar.Add($"'{currentTemplate.Name}' loaded successfully!", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add("Error deserializing form data", Severity.Error);
+                }
             }
             else
             {
@@ -1312,10 +1328,56 @@ else
     {
         try
         {
-            await LocalStorage.SaveFormAsync(currentTemplate);
-            hasUnsavedChanges = false;
-            lastSaveTime = DateTime.Now;
-            Snackbar.Add($"'{currentTemplate.Name}' saved successfully!", Severity.Success);
+            // Serialize the template to JSON
+            var jsonData = JsonSerializer.Serialize(currentTemplate);
+
+            // Check if this is a new template or updating existing
+            if (currentTemplate.Id == Guid.Empty)
+            {
+                // Create new template via API
+                var request = new FormMaker.Client.Services.CreateTemplateRequest
+                {
+                    Name = currentTemplate.Name,
+                    Description = "", // TODO: Add description field to UI
+                    JsonData = jsonData,
+                    Category = "Custom",
+                    Tags = "",
+                    IsPublic = false
+                };
+
+                var response = await ApiService.PostAsync<FormMaker.Client.Services.CreateTemplateRequest, FormMaker.Client.Services.TemplateResponse>("templates", request);
+
+                if (response != null)
+                {
+                    // Update the current template ID with the server-generated ID
+                    currentTemplate.Id = response.Id;
+                    hasUnsavedChanges = false;
+                    lastSaveTime = DateTime.Now;
+                    Snackbar.Add($"'{currentTemplate.Name}' created successfully!", Severity.Success);
+                }
+            }
+            else
+            {
+                // Update existing template via API
+                var request = new FormMaker.Client.Services.UpdateTemplateRequest
+                {
+                    Name = currentTemplate.Name,
+                    Description = "", // TODO: Add description field to UI
+                    JsonData = jsonData,
+                    Category = "Custom",
+                    Tags = "",
+                    IsPublic = false
+                };
+
+                var response = await ApiService.PutAsync<FormMaker.Client.Services.UpdateTemplateRequest, FormMaker.Client.Services.TemplateResponse>($"templates/{currentTemplate.Id}", request);
+
+                if (response != null)
+                {
+                    hasUnsavedChanges = false;
+                    lastSaveTime = DateTime.Now;
+                    Snackbar.Add($"'{currentTemplate.Name}' saved successfully!", Severity.Success);
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -1329,19 +1391,74 @@ else
         {
             try
             {
-                await LocalStorage.SaveFormAsync(currentTemplate);
-                hasUnsavedChanges = false;
-                lastSaveTime = DateTime.Now;
+                // Serialize the template to JSON
+                var jsonData = JsonSerializer.Serialize(currentTemplate);
 
-                // Show subtle notification for auto-save
-                await InvokeAsync(() =>
+                // Check if this is a new template or updating existing
+                if (currentTemplate.Id == Guid.Empty)
                 {
-                    Snackbar.Add("Auto-saved", Severity.Info, config =>
+                    // Create new template via API
+                    var request = new FormMaker.Client.Services.CreateTemplateRequest
                     {
-                        config.VisibleStateDuration = 1000;
-                    });
-                    StateHasChanged();
-                });
+                        Name = currentTemplate.Name,
+                        Description = "",
+                        JsonData = jsonData,
+                        Category = "Custom",
+                        Tags = "",
+                        IsPublic = false
+                    };
+
+                    var response = await ApiService.PostAsync<FormMaker.Client.Services.CreateTemplateRequest, FormMaker.Client.Services.TemplateResponse>("templates", request);
+
+                    if (response != null)
+                    {
+                        // Update the current template ID with the server-generated ID
+                        currentTemplate.Id = response.Id;
+                        hasUnsavedChanges = false;
+                        lastSaveTime = DateTime.Now;
+
+                        // Show subtle notification for auto-save
+                        await InvokeAsync(() =>
+                        {
+                            Snackbar.Add("Auto-saved", Severity.Info, config =>
+                            {
+                                config.VisibleStateDuration = 1000;
+                            });
+                            StateHasChanged();
+                        });
+                    }
+                }
+                else
+                {
+                    // Update existing template via API
+                    var request = new FormMaker.Client.Services.UpdateTemplateRequest
+                    {
+                        Name = currentTemplate.Name,
+                        Description = "",
+                        JsonData = jsonData,
+                        Category = "Custom",
+                        Tags = "",
+                        IsPublic = false
+                    };
+
+                    var response = await ApiService.PutAsync<FormMaker.Client.Services.UpdateTemplateRequest, FormMaker.Client.Services.TemplateResponse>($"templates/{currentTemplate.Id}", request);
+
+                    if (response != null)
+                    {
+                        hasUnsavedChanges = false;
+                        lastSaveTime = DateTime.Now;
+
+                        // Show subtle notification for auto-save
+                        await InvokeAsync(() =>
+                        {
+                            Snackbar.Add("Auto-saved", Severity.Info, config =>
+                            {
+                                config.VisibleStateDuration = 1000;
+                            });
+                            StateHasChanged();
+                        });
+                    }
+                }
             }
             catch
             {
