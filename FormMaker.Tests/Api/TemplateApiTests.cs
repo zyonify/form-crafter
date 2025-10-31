@@ -12,7 +12,7 @@ namespace FormMaker.Tests.Api;
 public class TemplateApiTests
 {
     private readonly HttpClient _httpClient;
-    private const string BaseUrl = "https://form-crafter.onrender.com/api";
+    private const string BaseUrl = "https://form-crafter.onrender.com/api/";
 
     // Test user credentials - you can change these
     private const string TestEmail = "test@example.com";
@@ -71,7 +71,7 @@ public class TemplateApiTests
                 displayName = "Test User"
             };
 
-            var registerResponse = await _httpClient.PostAsJsonAsync("/auth/register", registerRequest);
+            var registerResponse = await _httpClient.PostAsJsonAsync("auth/register", registerRequest);
 
             if (registerResponse.IsSuccessStatusCode)
             {
@@ -92,7 +92,7 @@ public class TemplateApiTests
             password = TestPassword
         };
 
-        var loginResponse = await _httpClient.PostAsJsonAsync("/auth/login", loginRequest);
+        var loginResponse = await _httpClient.PostAsJsonAsync("auth/login", loginRequest);
         loginResponse.EnsureSuccessStatusCode();
 
         var loginResult = await loginResponse.Content.ReadFromJsonAsync<AuthResponse>();
@@ -111,7 +111,7 @@ public class TemplateApiTests
         return request;
     }
 
-    [Fact(Skip = "Integration test - requires live API at Render.com")]
+    [Fact]
     public async Task Test01_RegisterAndLogin_ShouldReturnToken()
     {
         // Act
@@ -122,7 +122,7 @@ public class TemplateApiTests
         Assert.NotEmpty(token);
     }
 
-    [Fact(Skip = "Integration test - requires live API at Render.com")]
+    [Fact]
     public async Task Test02_CreateTemplate_ShouldReturnCreatedTemplate()
     {
         // Arrange
@@ -137,7 +137,7 @@ public class TemplateApiTests
             IsPublic = false
         };
 
-        var request = await CreateAuthenticatedRequest(HttpMethod.Post, "/templates");
+        var request = await CreateAuthenticatedRequest(HttpMethod.Post, "templates");
         request.Content = JsonContent.Create(createRequest);
 
         // Act
@@ -153,11 +153,11 @@ public class TemplateApiTests
         Assert.NotEqual(Guid.Empty, result.Id);
     }
 
-    [Fact(Skip = "Integration test - requires live API at Render.com")]
+    [Fact]
     public async Task Test03_GetAllTemplates_ShouldReturnList()
     {
         // Arrange
-        var request = await CreateAuthenticatedRequest(HttpMethod.Get, "/templates");
+        var request = await CreateAuthenticatedRequest(HttpMethod.Get, "templates");
 
         // Act
         var response = await _httpClient.SendAsync(request);
@@ -171,7 +171,7 @@ public class TemplateApiTests
         Assert.True(result.TotalCount >= 0);
     }
 
-    [Fact(Skip = "Integration test - requires live API at Render.com")]
+    [Fact]
     public async Task Test04_CreateAndGetTemplate_ShouldReturnSameData()
     {
         // Arrange - Create a template
@@ -184,13 +184,13 @@ public class TemplateApiTests
             Category = "Test"
         };
 
-        var createReq = await CreateAuthenticatedRequest(HttpMethod.Post, "/templates");
+        var createReq = await CreateAuthenticatedRequest(HttpMethod.Post, "templates");
         createReq.Content = JsonContent.Create(createRequest);
         var createResponse = await _httpClient.SendAsync(createReq);
         var created = await createResponse.Content.ReadFromJsonAsync<TemplateResponse>();
 
         // Act - Get the template
-        var getRequest = await CreateAuthenticatedRequest(HttpMethod.Get, $"/templates/{created!.Id}");
+        var getRequest = await CreateAuthenticatedRequest(HttpMethod.Get, $"templates/{created!.Id}");
         var getResponse = await _httpClient.SendAsync(getRequest);
 
         // Assert
@@ -202,7 +202,7 @@ public class TemplateApiTests
         Assert.Equal("Get Test Form", result.Name);
     }
 
-    [Fact(Skip = "Integration test - requires live API at Render.com")]
+    [Fact]
     public async Task Test05_CreateAndUpdateTemplate_ShouldUpdateSuccessfully()
     {
         // Arrange - Create a template
@@ -215,7 +215,7 @@ public class TemplateApiTests
             Category = "Test"
         };
 
-        var createReq = await CreateAuthenticatedRequest(HttpMethod.Post, "/templates");
+        var createReq = await CreateAuthenticatedRequest(HttpMethod.Post, "templates");
         createReq.Content = JsonContent.Create(createRequest);
         var createResponse = await _httpClient.SendAsync(createReq);
         var created = await createResponse.Content.ReadFromJsonAsync<TemplateResponse>();
@@ -228,7 +228,7 @@ public class TemplateApiTests
             Category = "Updated"
         };
 
-        var updateReq = await CreateAuthenticatedRequest(HttpMethod.Put, $"/templates/{created!.Id}");
+        var updateReq = await CreateAuthenticatedRequest(HttpMethod.Put, $"templates/{created!.Id}");
         updateReq.Content = JsonContent.Create(updateRequest);
         var updateResponse = await _httpClient.SendAsync(updateReq);
 
@@ -242,7 +242,7 @@ public class TemplateApiTests
         Assert.Equal("Updated", result.Category);
     }
 
-    [Fact(Skip = "Integration test - requires live API at Render.com")]
+    [Fact]
     public async Task Test06_CreateAndDeleteTemplate_ShouldDeleteSuccessfully()
     {
         // Arrange - Create a template
@@ -255,29 +255,29 @@ public class TemplateApiTests
             Category = "Test"
         };
 
-        var createReq = await CreateAuthenticatedRequest(HttpMethod.Post, "/templates");
+        var createReq = await CreateAuthenticatedRequest(HttpMethod.Post, "templates");
         createReq.Content = JsonContent.Create(createRequest);
         var createResponse = await _httpClient.SendAsync(createReq);
         var created = await createResponse.Content.ReadFromJsonAsync<TemplateResponse>();
 
         // Act - Delete the template
-        var deleteReq = await CreateAuthenticatedRequest(HttpMethod.Delete, $"/templates/{created!.Id}");
+        var deleteReq = await CreateAuthenticatedRequest(HttpMethod.Delete, $"templates/{created!.Id}");
         var deleteResponse = await _httpClient.SendAsync(deleteReq);
 
         // Assert
         Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
 
         // Verify it's deleted (GET should fail)
-        var getReq = await CreateAuthenticatedRequest(HttpMethod.Get, $"/templates/{created.Id}");
+        var getReq = await CreateAuthenticatedRequest(HttpMethod.Get, $"templates/{created.Id}");
         var getResponse = await _httpClient.SendAsync(getReq);
         Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
     }
 
-    [Fact(Skip = "Integration test - requires live API at Render.com")]
+    [Fact]
     public async Task Test07_GetTemplates_WithoutAuth_ShouldReturn401()
     {
         // Arrange
-        var request = new HttpRequestMessage(HttpMethod.Get, "/templates");
+        var request = new HttpRequestMessage(HttpMethod.Get, "templates");
         // No auth header
 
         // Act
@@ -287,7 +287,7 @@ public class TemplateApiTests
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    [Fact(Skip = "Integration test - requires live API at Render.com")]
+    [Fact]
     public async Task Test08_CreateTemplate_WithInvalidData_ShouldReturn400()
     {
         // Arrange
@@ -298,7 +298,7 @@ public class TemplateApiTests
             description = "Invalid request"
         };
 
-        var request = await CreateAuthenticatedRequest(HttpMethod.Post, "/templates");
+        var request = await CreateAuthenticatedRequest(HttpMethod.Post, "templates");
         request.Content = JsonContent.Create(invalidRequest);
 
         // Act
