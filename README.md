@@ -2,7 +2,8 @@
 
 A user-friendly drag-and-drop form builder designed specifically for elderly and non-technical users. Create professional business forms, legal documents, and authorization letters with an accessible, intuitive interface.
 
-![Phase 1 Progress](https://img.shields.io/badge/Phase%201-100%25%20Complete-brightgreen)
+![Phase 1-3 Progress](https://img.shields.io/badge/Phase%201--3-Complete-brightgreen)
+![Phase 4 Progress](https://img.shields.io/badge/Phase%204-In%20Progress-yellow)
 ![.NET](https://img.shields.io/badge/.NET-8.0-512BD4)
 ![Blazor](https://img.shields.io/badge/Blazor-WASM-5C2D91)
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -17,35 +18,70 @@ Form Maker bridges the gap between powerful form creation tools and users who ne
 - **HR departments** creating repetitive forms
 - **Community organizations** needing printable and digital forms
 
-## ✨ Current Features (Phase 1 - 100% Complete)
+## ✨ Current Features (Phases 1-3 Complete)
 
 ### Core Functionality
 - ✅ **Drag & Drop Interface** - Click or drag elements from library to canvas
-- ✅ **4 MVP Element Types**
+- ✅ **12 Element Types**
   - Label/Heading - For titles and static text
   - Text Input - Single-line input fields
+  - Text Area - Multi-line text input
   - Checkbox - With customizable labels
-  - Image - Logo and image placeholders
+  - Radio Group - Multiple choice selection
+  - Dropdown - Select from options list
+  - Date Picker - Date selection with calendar
+  - File Upload - File input with validation
+  - Image - Logo and image placeholders with upload
+  - Signature - Canvas-based signature capture
+  - Table - Dynamic rows and columns
+  - Divider - Visual separators
 - ✅ **Smart Positioning**
   - Grid snapping (10px increments)
   - Alignment guides (centerline indicators)
+  - Smart spacing indicators
   - Real-time position feedback (X, Y, W, H)
-- ✅ **Live Property Editing**
-  - Font size, bold, italic
+- ✅ **Advanced Property Editing**
+  - Font size, bold, italic, text color
   - Element dimensions and position
-  - Element-specific properties (text content, placeholders, etc.)
+  - Borders (style, width, color, radius)
+  - Background colors and opacity
+  - Spacing (padding, margin)
+  - Shadow effects
+  - Element rotation
+  - Element-specific properties
 - ✅ **Professional Canvas**
-  - Multiple page sizes (A4, Letter, Legal, A3)
+  - Multiple page sizes (A4, Letter, Legal, A3, Custom)
   - Visual margin guides for printable areas
   - Grid background for alignment
+  - Zoom controls (50%-200%)
+- ✅ **Editing Tools**
+  - Undo/Redo with keyboard shortcuts
+  - Copy/Paste/Duplicate elements
+  - Multi-select with Ctrl+Click
+  - Element layering (bring to front, send to back)
+  - Resize handles
+  - Delete with confirmation
 
 ### Accessibility Features (WCAG 2.1 AA Compliant)
 - ✅ **Large Touch Targets** - Minimum 48x48px buttons
 - ✅ **Enhanced Readability** - 18px minimum font size
 - ✅ **High Contrast Support** - 4.5:1 contrast ratio
-- ✅ **Keyboard Navigation** - Full keyboard support with visible focus indicators
+- ✅ **Keyboard Navigation** - Full keyboard support with shortcuts (Ctrl+Z/Y, Ctrl+C/V/D, Ctrl+A)
 - ✅ **Reduced Motion Support** - Respects user preferences
-- ✅ **Screen Reader Compatible** - Proper ARIA labels
+- ✅ **Screen Reader Compatible** - Proper ARIA labels and semantic HTML
+- ✅ **Automated Testing** - axe-core integration for continuous accessibility audits
+
+### Backend & Database
+- ✅ **User Authentication** - JWT-based auth with register/login
+- ✅ **Cloud Storage** - Forms saved to database, accessible from any device
+- ✅ **API Integration** - RESTful API with full CRUD operations
+- ✅ **Auto-save** - Forms automatically saved every 30 seconds
+- ✅ **Form Sharing** - Generate shareable links for form submissions
+
+### Export & Preview
+- ✅ **PDF Export** - Export blank or filled forms to PDF (all 12 element types)
+- ✅ **Responsive Preview** - Desktop, tablet, and mobile preview modes
+- ✅ **Form Validation** - Built-in validation framework for required fields and input types
 
 ## 🛠 Tech Stack
 
@@ -54,22 +90,22 @@ Form Maker bridges the gap between powerful form creation tools and users who ne
 - **MudBlazor v8.13.0** - Material Design component library
 - **Native HTML5 Drag & Drop** - No external dependencies
 
-### Backend (Planned - Phase 3)
-- **ASP.NET Core 8 Web API** - RESTful API
-- **Azure Functions** - Serverless compute
-- **Entity Framework Core** - Database ORM
-- **PostgreSQL/Azure SQL** - Database
+### Backend (Deployed)
+- **ASP.NET Core 8 Minimal API** - RESTful API deployed to Render.com
+- **Entity Framework Core 8** - Database ORM with migrations
+- **SQLite** - Lightweight embedded database
+- **JWT Authentication** - Secure token-based auth
 
 ### Infrastructure
-- **Azure Static Web Apps** - Frontend hosting with CDN
-- **Azure Functions** - API hosting
-- **Azure Blob Storage** - File storage (images, PDFs)
-- **GitHub Actions** - CI/CD pipeline
+- **GitHub Pages** - Frontend hosting at https://zyonify.github.io/form-crafter/
+- **Render.com** - API hosting at https://form-crafter.onrender.com/api/
+- **GitHub Actions** - Automated CI/CD with test runner and deployment
 
-### Additional Technologies (Planned)
-- **QuestPDF** - Server-side PDF generation
-- **SignalR** - Real-time collaboration (future)
-- **SendGrid/Azure Communication Services** - Email notifications
+### Additional Technologies
+- **jsPDF** - Client-side PDF generation
+- **axe-core** - Automated accessibility testing
+- **xUnit + bUnit** - Unit testing framework (120+ tests)
+- **Moq** - Mocking framework for API tests
 
 ## 🚀 Getting Started
 
@@ -91,23 +127,36 @@ Form Maker bridges the gap between powerful form creation tools and users who ne
    dotnet restore
    ```
 
-3. **Run the application**
+3. **Run the API (optional - use live API by default)**
+   ```bash
+   cd FormMaker.Api
+   dotnet run
+   ```
+
+4. **Run the application**
    ```bash
    dotnet run --project FormMaker.Client/FormMaker.Client.csproj
    ```
 
-4. **Open in browser**
+5. **Open in browser**
    ```
    Navigate to: http://localhost:5231
    ```
 
+### Live Demo
+- **Frontend**: https://zyonify.github.io/form-crafter/
+- **API**: https://form-crafter.onrender.com/api/
+
 ### Quick Start Guide
 
-1. **Add Elements** - Click or drag elements from the left sidebar to the canvas
-2. **Position Elements** - Drag elements on the canvas; they'll snap to a 10px grid
-3. **Edit Properties** - Click an element to select it, then edit properties in the right panel
-4. **Build Your Form** - Add multiple elements to create your complete form
-5. **Save** - Click the Save button in the top toolbar (currently shows a toast notification)
+1. **Register/Login** - Create an account to save your forms to the cloud
+2. **Add Elements** - Click or drag elements from the left sidebar to the canvas
+3. **Position Elements** - Drag elements on the canvas; they'll snap to a 10px grid
+4. **Edit Properties** - Click an element to select it, then edit properties in the right panel
+5. **Build Your Form** - Add multiple elements to create your complete form
+6. **Save** - Forms auto-save every 30 seconds, or click Save button manually
+7. **Share** - Click Share to generate a public link for form submissions
+8. **Export PDF** - Export your form as a PDF for printing or distribution
 
 ## 📁 Project Structure
 
@@ -116,25 +165,47 @@ form-maker/
 ├── FormMaker.Client/              # Blazor WASM frontend
 │   ├── Components/                # Reusable components
 │   │   ├── Canvas.razor           # Main form editing canvas
-│   │   └── ElementLibrary.razor   # Element sidebar
+│   │   ├── ElementLibrary.razor   # Element sidebar
+│   │   ├── PageTabs.razor         # Multi-page support
+│   │   └── ShareFormDialog.razor  # Form sharing UI
 │   ├── Pages/                     # Application pages
-│   │   └── Editor.razor           # Main editor page
+│   │   ├── Editor.razor           # Main editor page
+│   │   ├── Forms.razor            # Form management page
+│   │   ├── PreviewMode.razor      # Responsive preview
+│   │   └── Auth/                  # Login/Register pages
+│   ├── Services/                  # Business logic
+│   │   ├── ApiService.cs          # API client
+│   │   ├── HistoryService.cs      # Undo/redo
+│   │   ├── ValidationService.cs   # Form validation
+│   │   └── PdfExportService.cs    # PDF generation
 │   ├── wwwroot/                   # Static files
-│   │   ├── css/
-│   │   │   └── custom-theme.css   # Accessibility-focused theme
-│   │   └── staticwebapp.config.json
+│   │   ├── css/custom-theme.css   # Accessibility theme
+│   │   └── js/                    # JavaScript interop
 │   └── Program.cs                 # Application entry point
 │
 ├── FormMaker.Shared/              # Shared models and DTOs
 │   ├── Models/                    # Data models
-│   │   ├── Elements/              # Element type definitions
+│   │   ├── Elements/              # 12 element types
 │   │   ├── FormElement.cs         # Base element class
 │   │   ├── FormTemplate.cs        # Form container
+│   │   ├── TemplateModels.cs      # API DTOs
 │   │   └── ElementProperties.cs   # Styling properties
 │   └── Enums/                     # Enumerations
 │
-├── FormMaker.Api/                 # Backend API (Phase 3)
-│   └── (Coming soon)
+├── FormMaker.Api/                 # ASP.NET Core API
+│   ├── Functions/                 # API endpoints
+│   │   ├── AuthFunctions.cs       # Authentication
+│   │   ├── TemplateFunctions.cs   # Form CRUD
+│   │   ├── FormFunctions.cs       # Form sharing
+│   │   └── SubmissionFunctions.cs # Form submissions
+│   ├── Services/                  # Business logic
+│   ├── Data/                      # EF Core DbContext
+│   └── Migrations/                # Database migrations
+│
+├── FormMaker.Tests/               # Test suite
+│   ├── Services/                  # Service tests (120+ tests)
+│   ├── Models/                    # Model tests
+│   └── Api/                       # Integration tests
 │
 ├── TODO.md                        # Detailed development roadmap
 └── README.md                      # This file
@@ -150,52 +221,69 @@ form-maker/
 - [x] Grid snapping & alignment guides
 - [x] Element selection & properties panel
 - [x] 4 MVP element types
-- [x] Accessibility-focused theme
-- [x] Local storage persistence (auto-save + forms management)
+- [x] Accessibility-focused theme (WCAG 2.1 AA compliant)
 - [x] Save/Load functionality with form list view
-- [x] Basic element rendering (all 4 MVP types)
+- [x] Basic element rendering (all MVP types)
 
-### Phase 2: Enhanced Editor (Planned)
-- [ ] Additional form elements (Radio buttons, Dropdowns, Date pickers, Signatures, Tables, Text areas, Dividers, File uploads)
-- [ ] Advanced styling options (Borders, backgrounds, spacing, shadows)
-- [ ] Undo/redo system
-- [ ] Element manipulation tools (Duplicate, copy/paste, resize handles, rotation, layering)
-- [ ] Responsive preview modes
+### Phase 2: Enhanced Editor (100% Complete) ✅
+- [x] Additional form elements (8 new types: TextArea, Dropdown, DatePicker, Signature, Table, RadioGroup, FileUpload, Divider)
+- [x] Advanced styling options (Borders, backgrounds, spacing, shadows, rotation)
+- [x] Undo/redo system with keyboard shortcuts
+- [x] Element manipulation tools (Duplicate, copy/paste, resize handles, rotation, layering)
+- [x] Responsive preview modes (Desktop, Tablet, Mobile)
+- [x] Multi-page form support
+- [x] Image upload functionality
 
-### Phase 3: Backend & Database (Planned)
-- [ ] Azure Functions API setup
-- [ ] Database schema & Entity Framework
-- [ ] User authentication (JWT)
-- [ ] Template CRUD operations
-- [ ] API integration in frontend
+### Phase 2.6: Testing & Quality (100% Complete) ✅
+- [x] Unit testing infrastructure (120+ tests with xUnit, bUnit, Moq)
+- [x] Form validation framework (34 validation tests)
+- [x] Accessibility improvements (WCAG 2.1 AA compliance)
+- [x] Bug fixes (9 critical/high/medium bugs resolved)
+- [x] CI/CD pipeline (GitHub Actions with automated testing)
 
-### Phase 4: Form Sharing & Submissions (Planned)
-- [ ] Shareable form links
+### Phase 3: Backend & Database (95% Complete) ✅
+- [x] ASP.NET Core API deployed to Render.com
+- [x] Database with SQLite + EF Core migrations
+- [x] User authentication (JWT tokens, register/login)
+- [x] Template CRUD operations (Create, Read, Update, Delete)
+- [x] API integration in frontend (Forms.razor, Editor.razor)
+- [x] Auto-save to database every 30 seconds
+- [x] Comprehensive API tests (15 unit + 8 integration tests)
+
+### Phase 4: Form Sharing & Submissions (40% Complete) 🚧
+- [x] Shareable form links generation
+- [x] Share dialog UI with notification settings
+- [x] Form entity and database schema
 - [ ] Public form filling interface
 - [ ] Submission handling & storage
 - [ ] Submissions dashboard
 - [ ] Export to CSV/Excel
 
-### Phase 5: PDF Generation (Planned)
-- [ ] QuestPDF integration
-- [ ] Blank form PDF export
-- [ ] Filled form PDF export
-- [ ] PDF customization (headers, footers, metadata)
+### Phase 5: PDF Generation (80% Complete) ✅
+- [x] jsPDF integration (client-side)
+- [x] Blank form PDF export (all 12 element types)
+- [x] Filled form PDF export infrastructure
+- [x] PDF customization (metadata, page sizes)
+- [ ] PDF watermarks (optional)
+- [ ] Batch PDF export (optional)
 
-### Phase 6: UX Polish for Elderly Users (Planned)
-- [ ] WCAG 2.1 AA compliance audit
-- [ ] Enhanced keyboard navigation
-- [ ] Screen reader testing & improvements
-- [ ] High contrast theme
+### Phase 6: UX Polish for Elderly Users (Partial)
+- [x] WCAG 2.1 AA compliance audit with axe-core
+- [x] Enhanced keyboard navigation with shortcuts
+- [x] Screen reader compatibility with ARIA labels
+- [ ] High contrast theme (standard theme is high-contrast)
 - [ ] Interactive tutorial/onboarding
 - [ ] Pre-built template gallery
 
-### Phase 7: Deployment & Testing (Planned)
-- [ ] Azure Static Web Apps deployment
-- [ ] CI/CD pipeline setup
-- [ ] Performance optimization
+### Phase 7: Deployment & Testing (90% Complete) ✅
+- [x] GitHub Pages deployment (frontend)
+- [x] Render.com deployment (API)
+- [x] CI/CD pipeline with GitHub Actions
+- [x] Automated testing (120+ unit tests)
+- [x] Cross-browser testing
+- [ ] Performance optimization (deferred)
 - [ ] User acceptance testing with target audience
-- [ ] Cross-browser & mobile testing
+- [ ] Mobile device testing
 
 ## 🎨 Design Principles
 
@@ -270,8 +358,9 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 📞 Support & Feedback
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/form-maker/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/form-maker/discussions)
+- **Issues**: [GitHub Issues](https://github.com/zyonify/form-crafter/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/zyonify/form-crafter/discussions)
+- **Live Demo**: https://zyonify.github.io/form-crafter/
 
 ## 🔮 Future Vision
 
@@ -289,5 +378,3 @@ Form Maker aims to become the go-to solution for creating accessible, profession
 ---
 
 **Made with ❤️ for users who deserve accessible, user-friendly software**
-
-🤖 *Built with [Claude Code](https://claude.com/claude-code)*
